@@ -1,0 +1,9 @@
+[project]
+name = "flowsurgeon"
+version = "0.0.1"
+description = "FlowSurgeon - a profiler and db query counter in Python, for use in FastAPI, Flask and even independently with non-framework Python apps."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0.45",
+]
