@@ -3,7 +3,12 @@ name = "flowsurgeon"
 version = "0.0.1"
 description = "FlowSurgeon - a profiler and db query counter in Python, for use in FastAPI, Flask and even independently with non-framework Python apps."
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "sqlalchemy>=2.0.45",
+authors = [
+    { name = "Samandar-Komilov", email = "voidpointer07@gmail.com" }
 ]
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.9.17,<0.10.0"]
+build-backend = "uv_build"
