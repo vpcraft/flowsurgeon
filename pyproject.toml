@@ -22,3 +22,6 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
 ]
+examples = [
+    "flask>=3.1.3",
+]
