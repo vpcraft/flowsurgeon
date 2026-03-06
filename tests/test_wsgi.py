@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import io
-import pytest
 from flowsurgeon import Config, FlowSurgeonWSGI
 from flowsurgeon.storage.sqlite import SQLiteBackend
 
@@ -11,6 +10,7 @@ from flowsurgeon.storage.sqlite import SQLiteBackend
 # ---------------------------------------------------------------------------
 # Minimal WSGI helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_environ(
     method: str = "GET",
@@ -34,9 +34,7 @@ def _make_environ(
     }
 
 
-def _call_app(
-    app: FlowSurgeonWSGI, environ: dict
-) -> tuple[str, list[tuple[str, str]], bytes]:
+def _call_app(app: FlowSurgeonWSGI, environ: dict) -> tuple[str, list[tuple[str, str]], bytes]:
     """Call the WSGI app and return (status, headers, body)."""
     response: list = []
 
@@ -50,25 +48,32 @@ def _call_app(
 
 def _html_app(environ: dict, start_response) -> list[bytes]:
     body = b"<html><body><h1>Hello</h1></body></html>"
-    start_response("200 OK", [
-        ("Content-Type", "text/html; charset=utf-8"),
-        ("Content-Length", str(len(body))),
-    ])
+    start_response(
+        "200 OK",
+        [
+            ("Content-Type", "text/html; charset=utf-8"),
+            ("Content-Length", str(len(body))),
+        ],
+    )
     return [body]
 
 
 def _json_app(environ: dict, start_response) -> list[bytes]:
     body = b'{"ok": true}'
-    start_response("200 OK", [
-        ("Content-Type", "application/json"),
-        ("Content-Length", str(len(body))),
-    ])
+    start_response(
+        "200 OK",
+        [
+            ("Content-Type", "application/json"),
+            ("Content-Length", str(len(body))),
+        ],
+    )
     return [body]
 
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
+
 
 def _enabled_config(tmp_path) -> Config:
     return Config(
@@ -81,6 +86,7 @@ def _enabled_config(tmp_path) -> Config:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestDisabledByDefault:
     def test_passthrough_when_disabled(self, tmp_path):

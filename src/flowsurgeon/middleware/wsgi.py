@@ -62,7 +62,7 @@ class FlowSurgeonWSGI:
         if path == debug_route or path == debug_route + "/":
             return self._serve_history(environ, start_response)
         if path.startswith(debug_route + "/"):
-            request_id = path[len(debug_route) + 1:]
+            request_id = path[len(debug_route) + 1 :]
             return self._serve_detail(request_id, environ, start_response)
 
         return self._profile_request(environ, start_response, client_host, path)
@@ -74,10 +74,13 @@ class FlowSurgeonWSGI:
     def _serve_history(self, environ: Environ, start_response: StartResponse) -> Iterable[bytes]:
         records = self._storage.list_recent(limit=100)
         body = render_history_page(records, self._config.debug_route).encode()
-        start_response("200 OK", [
-            ("Content-Type", "text/html; charset=utf-8"),
-            ("Content-Length", str(len(body))),
-        ])
+        start_response(
+            "200 OK",
+            [
+                ("Content-Type", "text/html; charset=utf-8"),
+                ("Content-Length", str(len(body))),
+            ],
+        )
         return [body]
 
     def _serve_detail(
@@ -86,16 +89,22 @@ class FlowSurgeonWSGI:
         record = self._storage.get(request_id)
         if record is None:
             body = b"<h1>Not found</h1>"
-            start_response("404 Not Found", [
-                ("Content-Type", "text/html; charset=utf-8"),
-                ("Content-Length", str(len(body))),
-            ])
+            start_response(
+                "404 Not Found",
+                [
+                    ("Content-Type", "text/html; charset=utf-8"),
+                    ("Content-Length", str(len(body))),
+                ],
+            )
             return [body]
         body = render_detail_page(record, self._config.debug_route).encode()
-        start_response("200 OK", [
-            ("Content-Type", "text/html; charset=utf-8"),
-            ("Content-Length", str(len(body))),
-        ])
+        start_response(
+            "200 OK",
+            [
+                ("Content-Type", "text/html; charset=utf-8"),
+                ("Content-Length", str(len(body))),
+            ],
+        )
         return [body]
 
     # ------------------------------------------------------------------
@@ -157,9 +166,7 @@ class FlowSurgeonWSGI:
                 body = body + panel_html
             chunks = [body]
             # Rebuild headers with updated Content-Length
-            resp_headers = [
-                (k, v) for k, v in resp_headers if k.lower() != "content-length"
-            ]
+            resp_headers = [(k, v) for k, v in resp_headers if k.lower() != "content-length"]
             resp_headers.append(("Content-Length", str(len(body))))
 
         start_response(status_str, resp_headers)
@@ -177,13 +184,12 @@ class FlowSurgeonWSGI:
 # Module-level helpers
 # ---------------------------------------------------------------------------
 
+
 def _client_host(environ: Environ) -> str:
     return environ.get("HTTP_X_FORWARDED_FOR", environ.get("REMOTE_ADDR", "")).split(",")[0].strip()
 
 
-def _extract_request_headers(
-    environ: Environ, strip: list[str]
-) -> dict[str, str]:
+def _extract_request_headers(environ: Environ, strip: list[str]) -> dict[str, str]:
     headers: dict[str, str] = {}
     for key, value in environ.items():
         if key == "CONTENT_TYPE":
@@ -196,9 +202,7 @@ def _extract_request_headers(
     return headers
 
 
-def _headers_to_dict(
-    headers: list[tuple[str, str]], strip: list[str]
-) -> dict[str, str]:
+def _headers_to_dict(headers: list[tuple[str, str]], strip: list[str]) -> dict[str, str]:
     result: dict[str, str] = {}
     for name, value in headers:
         lower = name.lower()

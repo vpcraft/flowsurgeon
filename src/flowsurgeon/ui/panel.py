@@ -134,15 +134,21 @@ def render_detail_page(record: RequestRecord, debug_route: str) -> str:
     badge_cls = _status_badge_class(record.status_code)
     qs = f"?{escape(record.query_string)}" if record.query_string else ""
 
-    req_rows = "".join(
-        f"<tr><td>{escape(k)}</td><td>{escape(v)}</td></tr>"
-        for k, v in record.request_headers.items()
-    ) or "<tr><td colspan='2'>—</td></tr>"
+    req_rows = (
+        "".join(
+            f"<tr><td>{escape(k)}</td><td>{escape(v)}</td></tr>"
+            for k, v in record.request_headers.items()
+        )
+        or "<tr><td colspan='2'>—</td></tr>"
+    )
 
-    resp_rows = "".join(
-        f"<tr><td>{escape(k)}</td><td>{escape(v)}</td></tr>"
-        for k, v in record.response_headers.items()
-    ) or "<tr><td colspan='2'>—</td></tr>"
+    resp_rows = (
+        "".join(
+            f"<tr><td>{escape(k)}</td><td>{escape(v)}</td></tr>"
+            for k, v in record.response_headers.items()
+        )
+        or "<tr><td colspan='2'>—</td></tr>"
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
