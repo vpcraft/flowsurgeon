@@ -20,7 +20,9 @@ def FlowSurgeon(app, *, config: Config | None = None, storage=None):
     FastAPI / Starlette apps are detected as ASGI; plain WSGI callables
     (Flask, Django, etc.) are wrapped with :class:`FlowSurgeonWSGI`.
     """
-    if inspect.iscoroutinefunction(app) or inspect.iscoroutinefunction(getattr(app, "__call__", None)):
+    if inspect.iscoroutinefunction(app) or inspect.iscoroutinefunction(
+        getattr(app, "__call__", None)
+    ):
         return FlowSurgeonASGI(app, config=config, storage=storage)
     return FlowSurgeonWSGI(app, config=config, storage=storage)
 

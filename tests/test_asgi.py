@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import pytest
 
 from flowsurgeon import Config, FlowSurgeon, FlowSurgeonASGI
@@ -51,37 +50,43 @@ async def _call_app(
 
 async def _html_app(scope, receive, send) -> None:
     body = b"<html><body><h1>Hello</h1></body></html>"
-    await send({
-        "type": "http.response.start",
-        "status": 200,
-        "headers": [
-            (b"content-type", b"text/html; charset=utf-8"),
-            (b"content-length", str(len(body)).encode()),
-        ],
-    })
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"text/html; charset=utf-8"),
+                (b"content-length", str(len(body)).encode()),
+            ],
+        }
+    )
     await send({"type": "http.response.body", "body": body})
 
 
 async def _json_app(scope, receive, send) -> None:
     body = b'{"ok": true}'
-    await send({
-        "type": "http.response.start",
-        "status": 200,
-        "headers": [
-            (b"content-type", b"application/json"),
-            (b"content-length", str(len(body)).encode()),
-        ],
-    })
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"content-length", str(len(body)).encode()),
+            ],
+        }
+    )
     await send({"type": "http.response.body", "body": body})
 
 
 async def _streaming_app(scope, receive, send) -> None:
     """Multi-chunk streaming response (non-HTML)."""
-    await send({
-        "type": "http.response.start",
-        "status": 200,
-        "headers": [(b"content-type", b"application/octet-stream")],
-    })
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [(b"content-type", b"application/octet-stream")],
+        }
+    )
     for chunk in [b"chunk1", b"chunk2", b"chunk3"]:
         await send({"type": "http.response.body", "body": chunk, "more_body": True})
     await send({"type": "http.response.body", "body": b"", "more_body": False})
