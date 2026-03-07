@@ -1,103 +1,137 @@
-"""FlowSurgeon v0.2.0 — demo with FastAPI (ASGI).
+"""FlowSurgeon v0.3.0 — FastAPI demo (API-first, SQLAlchemyTracker).
 
 Run:
-    uv run --group examples uvicorn examples.fastapi.demo_fastapi:app
+    uv run --group examples uvicorn examples.fastapi.demo_fastapi:app --reload
 
-Then open http://127.0.0.1:8000 in your browser.
+Then hit the API at http://127.0.0.1:8000 and inspect query tracking at:
+    http://127.0.0.1:8000/__flowsurgeon__/
 
-Routes to try:
-    /                  HTML page — panel injects here
-    /about             another HTML page
-    /api/items         JSON response — panel must NOT appear
-    /slow              waits 300ms — panel shows timing
-    /boom              raises 500 — panel shows red badge
-    /__flowsurgeon__/              request history
-    /__flowsurgeon__/<id>          single request detail
+Routes:
+    GET /books                 list books   (1 SQL query)
+    GET /books/{id}            book detail  (1 SQL query, parametrised)
+    GET /books/duplicates      same query twice → "dup" badge
+    GET /books/slow            80 ms sleep between queries → "slow" badge
+    GET /slow                  300 ms sleep, no DB queries
+    GET /boom                  500 error
 """
 
 import asyncio
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from sqlalchemy import Integer, String, create_engine, text
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from flowsurgeon import Config, FlowSurgeon
+from flowsurgeon.trackers.sqlalchemy import SQLAlchemyTracker
+
+# ---------------------------------------------------------------------------
+# SQLAlchemy setup
+# ---------------------------------------------------------------------------
+
+engine = create_engine("sqlite:///books_fastapi.db", echo=False)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Book(Base):
+    __tablename__ = "books"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    author: Mapped[str] = mapped_column(String, nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+Base.metadata.create_all(engine)
+
+with Session(engine) as _seed:
+    if _seed.execute(text("SELECT COUNT(*) FROM books")).scalar() == 0:
+        _seed.execute(
+            text(
+                "INSERT INTO books (title, author, year) VALUES "
+                "('Clean Code', 'Robert C. Martin', 2008), "
+                "('The Pragmatic Programmer', 'Andy Hunt', 1999), "
+                "('Design Patterns', 'Gang of Four', 1994), "
+                "('Refactoring', 'Martin Fowler', 1999), "
+                "('You Don''t Know JS', 'Kyle Simpson', 2015)"
+            )
+        )
+        _seed.commit()
+
+_tracker = SQLAlchemyTracker(engine, capture_stacktrace=False)
+
+# ---------------------------------------------------------------------------
+# FastAPI app
+# ---------------------------------------------------------------------------
 
 _inner = FastAPI()
 
-# Wrap the FastAPI ASGI app with FlowSurgeon.
-# FlowSurgeon() auto-detects ASGI and returns FlowSurgeonASGI.
 app = FlowSurgeon(
     _inner,
     config=Config(
         enabled=True,
-        db_path="demo_fastapi.db",
+        db_path="flowsurgeon_fastapi.db",
         allowed_hosts=["127.0.0.1", "::1", "localhost"],
+        slow_query_threshold_ms=50.0,
     ),
+    trackers=[_tracker],
 )
-
-# ---------------------------------------------------------------------------
-# Shared HTML template
-# ---------------------------------------------------------------------------
-
-_PAGE = """<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>{title}</title>
-  <style>
-    body {{ font-family: sans-serif; max-width: 680px; margin: 60px auto; color: #333; }}
-    nav a {{ margin-right: 16px; color: #0066cc; text-decoration: none; }}
-    nav a:hover {{ text-decoration: underline; }}
-    h1 {{ color: #1a1a2e; }}
-  </style>
-</head>
-<body>
-  <nav>
-    <a href="/">Home</a>
-    <a href="/about">About</a>
-    <a href="/api/items">JSON API</a>
-    <a href="/slow">Slow (300ms)</a>
-    <a href="/boom">Boom (500)</a>
-  </nav>
-  <h1>{title}</h1>
-  <p>{body}</p>
-</body>
-</html>"""
 
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
 
-@_inner.get("/", response_class=HTMLResponse)
-async def index():
-    return _PAGE.format(
-        title="FlowSurgeon Demo (FastAPI)",
-        body="This is the home page. The debug panel should appear in the bottom-right corner.",
-    )
+@_inner.get("/books")
+async def books():
+    with Session(engine) as session:
+        rows = session.execute(
+            text("SELECT id, title, author, year FROM books ORDER BY year")
+        ).fetchall()
+    return {"books": [r._asdict() for r in rows]}
 
 
-@_inner.get("/about", response_class=HTMLResponse)
-async def about():
-    return _PAGE.format(
-        title="About",
-        body="FlowSurgeon is a framework-agnostic profiling middleware for Python.",
-    )
+@_inner.get("/books/duplicates")
+async def books_duplicates():
+    """Runs the same query twice — panel shows 'dup' badge."""
+    with Session(engine) as session:
+        first = session.execute(
+            text("SELECT id, title FROM books WHERE year < 2000")
+        ).fetchall()
+        _ = session.execute(
+            text("SELECT id, title FROM books WHERE year < 2000")
+        ).fetchall()
+    return {"books": [r._asdict() for r in first], "note": "same query ran twice — check /__flowsurgeon__/"}
 
 
-@_inner.get("/api/items", response_class=JSONResponse)
-async def api_items():
-    # JSON response — FlowSurgeon must NOT inject the panel here.
-    return {"items": ["apple", "banana", "cherry"], "count": 3}
+@_inner.get("/books/slow")
+async def books_slow():
+    """Adds an 80 ms async sleep between two queries; one will exceed slow_query_threshold_ms=50."""
+    with Session(engine) as session:
+        rows = session.execute(text("SELECT id, title FROM books")).fetchall()
+        await asyncio.sleep(0.08)
+        total = session.execute(text("SELECT COUNT(*) FROM books")).scalar()
+    return {"books": [r._asdict() for r in rows], "total": total, "note": "check /__flowsurgeon__/ for slow badge"}
 
 
-@_inner.get("/slow", response_class=HTMLResponse)
+@_inner.get("/books/{book_id}")
+async def book_detail(book_id: int):
+    with Session(engine) as session:
+        row = session.execute(
+            text("SELECT id, title, author, year FROM books WHERE id = :id"),
+            {"id": book_id},
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return row._asdict()
+
+
+@_inner.get("/slow")
 async def slow():
     await asyncio.sleep(0.3)
-    return _PAGE.format(
-        title="Slow endpoint",
-        body="This route sleeps 300ms. The panel should show ~300ms duration.",
-    )
+    return {"message": "delayed 300ms", "note": "no SQL queries on this route"}
 
 
 @_inner.get("/boom")
@@ -111,5 +145,5 @@ if __name__ == "__main__":
     import uvicorn
 
     print("FlowSurgeon FastAPI demo running at http://127.0.0.1:8000")
-    print("Debug history:  http://127.0.0.1:8000/__flowsurgeon__/")
+    print("Query tracking UI: http://127.0.0.1:8000/__flowsurgeon__/")
     uvicorn.run(app, host="127.0.0.1", port=8000)

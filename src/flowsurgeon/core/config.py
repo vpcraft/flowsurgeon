@@ -35,6 +35,9 @@ class Config:
     strip_sensitive_headers: list[str] = field(
         default_factory=lambda: ["authorization", "cookie", "set-cookie"]
     )
+    track_queries: bool = True
+    capture_query_stacktrace: bool = False
+    slow_query_threshold_ms: float = 100.0
 
 
 def _env_bool(name: str, default: bool) -> bool:

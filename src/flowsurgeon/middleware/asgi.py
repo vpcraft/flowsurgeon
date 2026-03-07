@@ -6,6 +6,8 @@ from typing import Awaitable, Callable
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.storage.async_sqlite import AsyncSQLiteBackend
+from flowsurgeon.trackers.base import QueryTracker
+from flowsurgeon.trackers.context import begin_query_collection, end_query_collection
 from flowsurgeon.ui.panel import render_detail_page, render_history_page, render_panel
 
 # ASGI type aliases
@@ -37,10 +39,14 @@ class FlowSurgeonASGI:
         app: ASGIApp,
         config: Config | None = None,
         storage: AsyncSQLiteBackend | None = None,
+        trackers: list[QueryTracker] | None = None,
     ) -> None:
         self._app = app
         self._config = config or Config()
         self._storage: AsyncSQLiteBackend = storage or AsyncSQLiteBackend(self._config.db_path)
+        self._trackers: list[QueryTracker] = trackers or []
+        for tracker in self._trackers:
+            tracker.install()
 
     # ------------------------------------------------------------------
     # ASGI entry point
@@ -90,6 +96,8 @@ class FlowSurgeonASGI:
 
         async def send_wrapper(message: dict) -> None:
             if message["type"] == "lifespan.shutdown.complete":
+                for tracker in self._trackers:
+                    tracker.uninstall()
                 await self._storage.close()
             await send(message)
 
@@ -193,9 +201,18 @@ class FlowSurgeonASGI:
                 else:
                     body_chunks.append(message.get("body", b""))
 
-        t0 = time.perf_counter()
-        await self._app(scope, receive, capturing_send)
-        duration_ms = (time.perf_counter() - t0) * 1000
+        queries, token = (
+            begin_query_collection()
+            if self._trackers and self._config.track_queries
+            else ([], None)
+        )
+        try:
+            t0 = time.perf_counter()
+            await self._app(scope, receive, capturing_send)
+            duration_ms = (time.perf_counter() - t0) * 1000
+        finally:
+            if token is not None:
+                end_query_collection(token)
 
         if start_message is None:
             return  # degenerate app
@@ -208,6 +225,7 @@ class FlowSurgeonASGI:
         record.response_headers = _asgi_headers_to_dict(
             resp_raw_headers, self._config.strip_sensitive_headers
         )
+        record.queries = queries
 
         # Persist asynchronously (non-blocking)
         await self._storage.enqueue(record, self._config.max_stored_requests)

@@ -5,7 +5,7 @@ import sqlite3
 import threading
 from datetime import datetime, timezone
 
-from flowsurgeon.core.records import RequestRecord
+from flowsurgeon.core.records import QueryRecord, RequestRecord
 from flowsurgeon.storage.base import StorageBackend
 
 _CREATE_TABLE = """
@@ -19,9 +19,13 @@ CREATE TABLE IF NOT EXISTS requests (
     duration_ms  REAL NOT NULL DEFAULT 0.0,
     client_host  TEXT NOT NULL DEFAULT '',
     req_headers  TEXT NOT NULL DEFAULT '{}',
-    resp_headers TEXT NOT NULL DEFAULT '{}'
+    resp_headers TEXT NOT NULL DEFAULT '{}',
+    queries      TEXT NOT NULL DEFAULT '[]'
 );
 """
+
+# Migration: add the queries column to databases created before v0.3.0
+_ADD_QUERIES_COLUMN = "ALTER TABLE requests ADD COLUMN queries TEXT NOT NULL DEFAULT '[]'"
 
 _CREATE_INDEX = """
 CREATE INDEX IF NOT EXISTS idx_requests_timestamp ON requests (timestamp DESC);
@@ -43,6 +47,10 @@ class SQLiteBackend(StorageBackend):
         conn = self._connect()
         conn.execute(_CREATE_TABLE)
         conn.execute(_CREATE_INDEX)
+        try:
+            conn.execute(_ADD_QUERIES_COLUMN)
+        except sqlite3.OperationalError:
+            pass  # column already exists (v0.3.0+ database)
         conn.commit()
 
     # ------------------------------------------------------------------
@@ -67,12 +75,23 @@ class SQLiteBackend(StorageBackend):
     # ------------------------------------------------------------------
 
     def save(self, record: RequestRecord) -> None:
+        queries_json = json.dumps(
+            [
+                {
+                    "sql": q.sql,
+                    "params": q.params,
+                    "duration_ms": q.duration_ms,
+                    "stack_trace": q.stack_trace,
+                }
+                for q in record.queries
+            ]
+        )
         self._conn.execute(
             """
             INSERT OR REPLACE INTO requests
                 (request_id, timestamp, method, path, query_string,
-                 status_code, duration_ms, client_host, req_headers, resp_headers)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 status_code, duration_ms, client_host, req_headers, resp_headers, queries)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 record.request_id,
@@ -85,6 +104,7 @@ class SQLiteBackend(StorageBackend):
                 record.client_host,
                 json.dumps(record.request_headers),
                 json.dumps(record.response_headers),
+                queries_json,
             ),
         )
         self._conn.commit()
@@ -125,6 +145,16 @@ class SQLiteBackend(StorageBackend):
 
 
 def _row_to_record(row: sqlite3.Row) -> RequestRecord:
+    raw_queries = json.loads(row["queries"]) if row["queries"] else []
+    queries = [
+        QueryRecord(
+            sql=q["sql"],
+            params=q.get("params"),
+            duration_ms=q.get("duration_ms", 0.0),
+            stack_trace=q.get("stack_trace"),
+        )
+        for q in raw_queries
+    ]
     return RequestRecord(
         request_id=row["request_id"],
         timestamp=datetime.fromisoformat(row["timestamp"]).replace(tzinfo=timezone.utc),
@@ -136,4 +166,5 @@ def _row_to_record(row: sqlite3.Row) -> RequestRecord:
         client_host=row["client_host"],
         request_headers=json.loads(row["req_headers"]),
         response_headers=json.loads(row["resp_headers"]),
+        queries=queries,
     )

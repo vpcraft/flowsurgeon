@@ -111,20 +111,7 @@ app = FlowSurgeon(app, trackers=[SQLAlchemyTracker(engine)])
 
 ---
 
-## v0.5.0 — Logging and Headers Panel
-
-**Goal**: Capture log output and request/response headers per request.
-
-### Deliverables
-
-- **Log capture**: install a `logging.Handler` per request, capture all log records emitted during the request; store level, logger name, message, timestamp
-- **Headers panel**: record request headers (with configurable strip list — default strips `Authorization`, `Cookie` values) and response headers
-- Panel tabs added: "Logs", "Headers"
-- Config additions: `capture_logs`, `log_level` (default: `logging.DEBUG`), `strip_headers` (list of header names to redact)
-
----
-
-## v0.6.0 — History and Search UI
+## v0.5.0 — History and Search UI
 
 **Goal**: Improve the debug endpoint into a usable request history browser.
 
@@ -138,7 +125,7 @@ app = FlowSurgeon(app, trackers=[SQLAlchemyTracker(engine)])
 
 ---
 
-## v0.7.0 — Optional Integrations and Extensibility
+## v0.6.0 — Optional Integrations and Extensibility
 
 **Goal**: Plugin API for third-party panels; additional ORM adapters.
 
