@@ -143,6 +143,15 @@ class FlowSurgeonASGI:
     # ------------------------------------------------------------------
 
     async def _serve_static(self, filename: str, send: Send) -> None:
+        # Guard against path traversal (e.g. /_static/../panel.py)
+        if not filename or "/" in filename or "\\" in filename or ".." in filename:
+            body = b"Not found"
+            await send({
+                "type": "http.response.start", "status": 404,
+                "headers": [(b"content-type", b"text/plain"), (b"content-length", str(len(body)).encode())],
+            })
+            await send({"type": "http.response.body", "body": body})
+            return
         ext = os.path.splitext(filename)[1].lower()
         mime = _MIME_TYPES.get(ext, "application/octet-stream")
         try:
@@ -191,6 +200,7 @@ class FlowSurgeonASGI:
             "headers": [
                 (b"content-type", b"text/html; charset=utf-8"),
                 (b"content-length", str(len(body)).encode()),
+                (b"cache-control", b"no-store"),
             ],
         })
         await send({"type": "http.response.body", "body": body})
@@ -222,6 +232,7 @@ class FlowSurgeonASGI:
             "headers": [
                 (b"content-type", b"text/html; charset=utf-8"),
                 (b"content-length", str(len(body)).encode()),
+                (b"cache-control", b"no-store"),
             ],
         })
         await send({"type": "http.response.body", "body": body})
@@ -289,6 +300,7 @@ class FlowSurgeonASGI:
         resp_raw_headers: list[tuple[bytes, bytes]] = start_message.get("headers", [])
 
         ct_header = (_get_asgi_header(resp_raw_headers, b"content-type") or b"").decode("latin-1")
+        body = b"".join(body_chunks)
 
         record.status_code = status_code
         record.duration_ms = duration_ms
@@ -296,12 +308,10 @@ class FlowSurgeonASGI:
             resp_raw_headers, self._config.strip_sensitive_headers
         )
         record.queries = queries
-        record.response_body = _decode_body(b"".join(body_chunks), ct_header)
+        record.response_body = _decode_body(body, ct_header)
 
         # Persist asynchronously (non-blocking)
         await self._storage.enqueue(record, self._config.max_stored_requests)
-
-        body = b"".join(body_chunks)
 
         if is_html:
             panel_html = render_panel(
@@ -356,10 +366,8 @@ def _parse_qs_int(query_string: str, key: str, default: int) -> int:
 
 
 def _client_host(scope: Scope) -> str:
-    headers: list[tuple[bytes, bytes]] = scope.get("headers", [])
-    for name, value in headers:
-        if name.lower() == b"x-forwarded-for":
-            return value.decode("latin-1").split(",")[0].strip()
+    # Use only the actual TCP connection source — never X-Forwarded-For,
+    # which is user-controlled and could be forged to bypass allowed_hosts.
     client = scope.get("client")
     return client[0] if client else ""
 

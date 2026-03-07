@@ -23,7 +23,6 @@ Environ = dict
 StartResponse = Callable[[str, list[tuple[str, str]]], None]
 WSGIApp = Callable[[Environ, StartResponse], Iterable[bytes]]
 
-_REDACTED = b"[redacted]"
 _HTML_CONTENT_TYPES = ("text/html",)
 _TEXT_CONTENT_TYPES = ("text/", "application/json", "application/xml", "application/javascript")
 _MAX_BODY_STORE = 128 * 1024  # 128 KB
@@ -118,6 +117,11 @@ class FlowSurgeonWSGI:
     def _serve_static(
         self, filename: str, start_response: StartResponse
     ) -> Iterable[bytes]:
+        # Guard against path traversal (e.g. /_static/../panel.py)
+        if not filename or "/" in filename or "\\" in filename or ".." in filename:
+            body = b"Not found"
+            start_response("404 Not Found", [("Content-Type", "text/plain"), ("Content-Length", str(len(body)))])
+            return [body]
         ext = os.path.splitext(filename)[1].lower()
         mime = _MIME_TYPES.get(ext, "application/octet-stream")
         try:
@@ -160,6 +164,7 @@ class FlowSurgeonWSGI:
             [
                 ("Content-Type", "text/html; charset=utf-8"),
                 ("Content-Length", str(len(body))),
+                ("Cache-Control", "no-store"),
             ],
         )
         return [body]
@@ -194,6 +199,7 @@ class FlowSurgeonWSGI:
             [
                 ("Content-Type", "text/html; charset=utf-8"),
                 ("Content-Length", str(len(body))),
+                ("Cache-Control", "no-store"),
             ],
         )
         return [body]
@@ -307,7 +313,10 @@ def _parse_qs_int(query_string: str, key: str, default: int) -> int:
 
 
 def _client_host(environ: Environ) -> str:
-    return environ.get("HTTP_X_FORWARDED_FOR", environ.get("REMOTE_ADDR", "")).split(",")[0].strip()
+    # Use only REMOTE_ADDR (the actual TCP connection source) — never
+    # HTTP_X_FORWARDED_FOR, which is user-controlled and could be forged
+    # to bypass the allowed_hosts check.
+    return environ.get("REMOTE_ADDR", "")
 
 
 def _extract_request_headers(environ: Environ, strip: list[str]) -> dict[str, str]:

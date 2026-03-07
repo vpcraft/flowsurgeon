@@ -132,7 +132,8 @@ class TestAllowedHosts:
         assert records[0].path == "/items"
         await storage.close()
 
-    async def test_x_forwarded_for_respected(self, tmp_path):
+    async def test_x_forwarded_for_is_ignored_for_access_control(self, tmp_path):
+        """XFF must not be trusted — actual connection IP is used for allowed_hosts."""
         cfg = Config(
             enabled=True,
             db_path=str(tmp_path / "test.db"),
@@ -140,13 +141,16 @@ class TestAllowedHosts:
         )
         storage = AsyncSQLiteBackend(cfg.db_path)
         app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+        # Real client is 127.0.0.1 (allowed) but XFF claims 10.0.0.1 (not allowed).
+        # Request should still be profiled — XFF must not override the real IP.
         scope = _make_scope(
             client=("127.0.0.1", 9999),
             headers=[(b"x-forwarded-for", b"10.0.0.1")],
         )
         await _call_app(app, scope)
         await storage._queue.join()
-        assert await storage.list_recent() == []
+        records = await storage.list_recent()
+        assert len(records) == 1
         await storage.close()
 
 

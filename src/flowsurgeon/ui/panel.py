@@ -26,6 +26,8 @@ _KNOWN_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS")
 
 
 def _status_class(status: int) -> str:
+    if status <= 0:
+        return ""
     if status < 300:
         return "s-2xx"
     if status < 400:
@@ -227,8 +229,8 @@ def _filter_records(
     if q:
         q_lower = q.lower()
         result = [r for r in result if q_lower in r.path.lower()]
-    if status:
-        prefix = status[0]  # "2", "3", "4", "5"
+    if status and status[0] in ("2", "3", "4", "5"):
+        prefix = status[0]
         result = [r for r in result if str(r.status_code).startswith(prefix)]
     return result
 
