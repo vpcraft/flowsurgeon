@@ -48,21 +48,6 @@ async def _call_app(
     return start["status"], start.get("headers", []), b"".join(body_chunks)
 
 
-async def _html_app(scope, receive, send) -> None:
-    body = b"<html><body><h1>Hello</h1></body></html>"
-    await send(
-        {
-            "type": "http.response.start",
-            "status": 200,
-            "headers": [
-                (b"content-type", b"text/html; charset=utf-8"),
-                (b"content-length", str(len(body)).encode()),
-            ],
-        }
-    )
-    await send({"type": "http.response.body", "body": body})
-
-
 async def _json_app(scope, receive, send) -> None:
     body = b'{"ok": true}'
     await send(
@@ -79,7 +64,7 @@ async def _json_app(scope, receive, send) -> None:
 
 
 async def _streaming_app(scope, receive, send) -> None:
-    """Multi-chunk streaming response (non-HTML)."""
+    """Multi-chunk streaming response."""
     await send(
         {
             "type": "http.response.start",
@@ -114,35 +99,38 @@ def _enabled_config(tmp_path) -> Config:
 class TestDisabledByDefault:
     async def test_passthrough_when_disabled(self, tmp_path):
         cfg = Config(enabled=False, db_path=str(tmp_path / "test.db"))
-        app = FlowSurgeonASGI(_html_app, config=cfg)
+        app = FlowSurgeonASGI(_json_app, config=cfg)
         _, _, body = await _call_app(app, _make_scope())
-        assert b"FlowSurgeon" not in body
-
-    async def test_enabled_shows_panel(self, tmp_path):
-        cfg = _enabled_config(tmp_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg)
-        _, _, body = await _call_app(app, _make_scope())
-        assert b"FlowSurgeon" in body
+        assert body == b'{"ok": true}'
 
 
 @pytest.mark.asyncio
 class TestAllowedHosts:
-    async def test_blocked_host_passthrough(self, tmp_path):
+    async def test_blocked_host_passes_through_unmodified(self, tmp_path):
         cfg = Config(
             enabled=True,
             db_path=str(tmp_path / "test.db"),
             allowed_hosts=["127.0.0.1"],
         )
-        app = FlowSurgeonASGI(_html_app, config=cfg)
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
         scope = _make_scope(client=("10.0.0.1", 9999))
         _, _, body = await _call_app(app, scope)
-        assert b"FlowSurgeon" not in body
+        assert body == b'{"ok": true}'
+        await storage._queue.join()
+        assert await storage.list_recent() == []
+        await storage.close()
 
-    async def test_allowed_host_gets_panel(self, tmp_path):
+    async def test_allowed_host_request_is_profiled(self, tmp_path):
         cfg = _enabled_config(tmp_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg)
-        _, _, body = await _call_app(app, _make_scope(client=("127.0.0.1", 9999)))
-        assert b"FlowSurgeon" in body
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+        await _call_app(app, _make_scope(path="/items", client=("127.0.0.1", 9999)))
+        await storage._queue.join()
+        records = await storage.list_recent()
+        assert len(records) == 1
+        assert records[0].path == "/items"
+        await storage.close()
 
     async def test_x_forwarded_for_respected(self, tmp_path):
         cfg = Config(
@@ -150,47 +138,31 @@ class TestAllowedHosts:
             db_path=str(tmp_path / "test.db"),
             allowed_hosts=["127.0.0.1"],
         )
-        app = FlowSurgeonASGI(_html_app, config=cfg)
-        # Real client is allowed, but X-Forwarded-For says a blocked IP
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
         scope = _make_scope(
             client=("127.0.0.1", 9999),
             headers=[(b"x-forwarded-for", b"10.0.0.1")],
         )
-        _, _, body = await _call_app(app, scope)
-        assert b"FlowSurgeon" not in body
+        await _call_app(app, scope)
+        await storage._queue.join()
+        assert await storage.list_recent() == []
+        await storage.close()
 
 
 @pytest.mark.asyncio
-class TestPanelInjection:
-    async def test_panel_injected_before_body_close(self, tmp_path):
-        cfg = _enabled_config(tmp_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg)
-        _, _, body = await _call_app(app, _make_scope())
-        assert b"fs-root" in body
-        assert body.index(b"fs-root") < body.index(b"</body>")
-
-    async def test_panel_not_injected_into_json(self, tmp_path):
+class TestResponsePassthrough:
+    async def test_json_response_passes_through_unmodified(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         app = FlowSurgeonASGI(_json_app, config=cfg)
         _, _, body = await _call_app(app, _make_scope())
-        assert b"fs-root" not in body
         assert body == b'{"ok": true}'
 
-    async def test_content_length_updated_after_injection(self, tmp_path):
-        cfg = _enabled_config(tmp_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg)
-        _, headers, body = await _call_app(app, _make_scope())
-        headers_dict = {k.lower(): v for k, v in headers}
-        cl = headers_dict.get(b"content-length")
-        assert cl is not None
-        assert int(cl) == len(body)
-
-    async def test_non_html_streaming_passes_through(self, tmp_path):
+    async def test_streaming_passes_through(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         app = FlowSurgeonASGI(_streaming_app, config=cfg)
         _, _, body = await _call_app(app, _make_scope())
         assert body == b"chunk1chunk2chunk3"
-        assert b"fs-root" not in body
 
 
 @pytest.mark.asyncio
@@ -198,9 +170,8 @@ class TestStorage:
     async def test_request_stored_after_call(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         storage = AsyncSQLiteBackend(cfg.db_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg, storage=storage)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
         await _call_app(app, _make_scope(path="/hello"))
-        # Drain writer queue before reading
         await storage._queue.join()
         records = await storage.list_recent()
         assert len(records) == 1
@@ -212,7 +183,7 @@ class TestStorage:
     async def test_sensitive_headers_redacted(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         storage = AsyncSQLiteBackend(cfg.db_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg, storage=storage)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
         scope = _make_scope(
             headers=[
                 (b"authorization", b"Bearer secret"),
@@ -229,7 +200,7 @@ class TestStorage:
     async def test_query_string_captured(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         storage = AsyncSQLiteBackend(cfg.db_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg, storage=storage)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
         await _call_app(app, _make_scope(qs=b"foo=bar&baz=1"))
         await storage._queue.join()
         record = (await storage.list_recent())[0]
@@ -241,29 +212,29 @@ class TestStorage:
 class TestDebugRoutes:
     async def test_history_route_returns_html(self, tmp_path):
         cfg = _enabled_config(tmp_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg)
+        app = FlowSurgeonASGI(_json_app, config=cfg)
         status, _, body = await _call_app(app, _make_scope(path="/__flowsurgeon__"))
         assert status == 200
         assert b"Request History" in body
 
     async def test_history_route_trailing_slash(self, tmp_path):
         cfg = _enabled_config(tmp_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg)
+        app = FlowSurgeonASGI(_json_app, config=cfg)
         status, _, body = await _call_app(app, _make_scope(path="/__flowsurgeon__/"))
         assert status == 200
         assert b"Request History" in body
 
     async def test_detail_route_not_found(self, tmp_path):
         cfg = _enabled_config(tmp_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg)
+        app = FlowSurgeonASGI(_json_app, config=cfg)
         status, _, _ = await _call_app(app, _make_scope(path="/__flowsurgeon__/nonexistent-id"))
         assert status == 404
 
     async def test_detail_route_returns_record(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         storage = AsyncSQLiteBackend(cfg.db_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg, storage=storage)
-        await _call_app(app, _make_scope(path="/my-page"))
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+        await _call_app(app, _make_scope(path="/my-endpoint"))
         await storage._queue.join()
         records = await storage.list_recent()
         record = records[0]
@@ -285,9 +256,9 @@ class TestPruning:
             max_stored_requests=3,
         )
         storage = AsyncSQLiteBackend(cfg.db_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg, storage=storage)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
         for i in range(5):
-            await _call_app(app, _make_scope(path=f"/page-{i}"))
+            await _call_app(app, _make_scope(path=f"/endpoint-{i}"))
         await storage._queue.join()
         records = await storage.list_recent(limit=100)
         assert len(records) == 3
@@ -298,14 +269,18 @@ class TestPruning:
 class TestFactoryDetection:
     async def test_factory_returns_asgi_for_async_app(self, tmp_path):
         cfg = _enabled_config(tmp_path)
-        wrapped = FlowSurgeon(_html_app, config=cfg)
+        wrapped = FlowSurgeon(_json_app, config=cfg)
         assert isinstance(wrapped, FlowSurgeonASGI)
 
     async def test_factory_asgi_works_end_to_end(self, tmp_path):
         cfg = _enabled_config(tmp_path)
-        app = FlowSurgeon(_html_app, config=cfg)
-        _, _, body = await _call_app(app, _make_scope())
-        assert b"FlowSurgeon" in body
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeon(_json_app, config=cfg, storage=storage)
+        _, _, body = await _call_app(app, _make_scope(path="/items"))
+        assert body == b'{"ok": true}'
+        await storage._queue.join()
+        assert len(await storage.list_recent()) == 1
+        await storage.close()
 
 
 @pytest.mark.asyncio
@@ -313,7 +288,7 @@ class TestLifespan:
     async def test_lifespan_starts_and_stops_storage(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         storage = AsyncSQLiteBackend(cfg.db_path)
-        app = FlowSurgeonASGI(_html_app, config=cfg, storage=storage)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
 
         lifespan_events = [
             {"type": "lifespan.startup"},
@@ -331,7 +306,6 @@ class TestLifespan:
         async def send(msg: dict) -> None:
             sent.append(msg)
 
-        # Minimal inner app that handles lifespan
         async def inner(scope, receive, send):
             while True:
                 event = await receive()

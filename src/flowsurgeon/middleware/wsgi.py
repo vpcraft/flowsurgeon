@@ -7,6 +7,8 @@ from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.storage.base import StorageBackend
 from flowsurgeon.storage.sqlite import SQLiteBackend
+from flowsurgeon.trackers.base import QueryTracker
+from flowsurgeon.trackers.context import begin_query_collection, end_query_collection
 from flowsurgeon.ui.panel import render_detail_page, render_history_page, render_panel
 
 # WSGI type aliases
@@ -38,10 +40,20 @@ class FlowSurgeonWSGI:
         app: WSGIApp,
         config: Config | None = None,
         storage: StorageBackend | None = None,
+        trackers: list[QueryTracker] | None = None,
     ) -> None:
         self._app = app
         self._config = config or Config()
         self._storage: StorageBackend = storage or SQLiteBackend(self._config.db_path)
+        self._trackers: list[QueryTracker] = trackers or []
+        for tracker in self._trackers:
+            tracker.install()
+
+    def close(self) -> None:
+        """Uninstall all trackers and release storage resources."""
+        for tracker in self._trackers:
+            tracker.uninstall()
+        self._storage.close()
 
     # ------------------------------------------------------------------
     # WSGI entry point
@@ -133,9 +145,14 @@ class FlowSurgeonWSGI:
             # Do NOT call the real start_response yet — we may need to
             # modify Content-Length after panel injection.
 
-        t0 = time.perf_counter()
-        chunks = list(self._app(environ, capturing_start_response))
-        duration_ms = (time.perf_counter() - t0) * 1000
+        queries, token = begin_query_collection() if self._trackers and self._config.track_queries else ([], None)
+        try:
+            t0 = time.perf_counter()
+            chunks = list(self._app(environ, capturing_start_response))
+            duration_ms = (time.perf_counter() - t0) * 1000
+        finally:
+            if token is not None:
+                end_query_collection(token)
 
         if not response_started:
             # Degenerate app that never called start_response
@@ -149,6 +166,7 @@ class FlowSurgeonWSGI:
         record.status_code = status_code
         record.duration_ms = duration_ms
         record.response_headers = resp_headers_dict
+        record.queries = queries
 
         # Persist
         self._storage.save(record)
