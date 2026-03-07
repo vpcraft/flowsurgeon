@@ -132,14 +132,14 @@ class TestDebugRoutes:
     def test_history_route_returns_html(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         app = FlowSurgeonWSGI(_json_app, config=cfg)
-        status, headers, body = _call_app(app, _make_environ(path="/__flowsurgeon__"))
+        status, headers, body = _call_app(app, _make_environ(path="/flowsurgeon"))
         assert status == "200 OK"
-        assert b"Request History" in body
+        assert b"FlowSurgeon" in body
 
     def test_detail_route_not_found(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         app = FlowSurgeonWSGI(_json_app, config=cfg)
-        status, _, _ = _call_app(app, _make_environ(path="/__flowsurgeon__/nonexistent-id"))
+        status, _, _ = _call_app(app, _make_environ(path="/flowsurgeon/nonexistent-id"))
         assert status == "404 Not Found"
 
     def test_detail_route_returns_record(self, tmp_path):
@@ -149,7 +149,7 @@ class TestDebugRoutes:
         _call_app(app, _make_environ(path="/my-endpoint"))
         record = storage.list_recent()[0]
         status, _, body = _call_app(
-            app, _make_environ(path=f"/__flowsurgeon__/{record.request_id}")
+            app, _make_environ(path=f"/flowsurgeon/{record.request_id}")
         )
         assert status == "200 OK"
         assert record.request_id.encode() in body

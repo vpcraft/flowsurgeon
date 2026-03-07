@@ -31,13 +31,16 @@ class Config:
     allowed_hosts: list[str] = field(default_factory=lambda: ["127.0.0.1", "::1", "localhost"])
     db_path: str = "flowsurgeon.db"
     max_stored_requests: int = 1000
-    debug_route: str = "/__flowsurgeon__"
+    debug_route: str = "/flowsurgeon"
     strip_sensitive_headers: list[str] = field(
         default_factory=lambda: ["authorization", "cookie", "set-cookie"]
     )
     track_queries: bool = True
     capture_query_stacktrace: bool = False
     slow_query_threshold_ms: float = 100.0
+    # (METHOD, path) pairs shown in the APIs view before any traffic is recorded.
+    # Auto-populated by the middleware via Flask/FastAPI/Starlette route discovery.
+    known_routes: list[tuple[str, str]] = field(default_factory=list)
 
 
 def _env_bool(name: str, default: bool) -> bool:

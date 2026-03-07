@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from typing import Awaitable, Callable
 
@@ -8,7 +9,13 @@ from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.storage.async_sqlite import AsyncSQLiteBackend
 from flowsurgeon.trackers.base import QueryTracker
 from flowsurgeon.trackers.context import begin_query_collection, end_query_collection
-from flowsurgeon.ui.panel import render_detail_page, render_history_page, render_panel
+from flowsurgeon.ui.panel import (
+    _load_asset_bytes,
+    discover_routes,
+    render_detail_page,
+    render_history_page,
+    render_panel,
+)
 
 # ASGI type aliases
 Scope = dict
@@ -17,6 +24,16 @@ Send = Callable[[dict], Awaitable[None]]
 ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
 
 _HTML_CONTENT_TYPES = ("text/html",)
+_TEXT_CONTENT_TYPES = ("text/", "application/json", "application/xml", "application/javascript")
+_MAX_BODY_STORE = 128 * 1024  # 128 KB
+_MIME_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".ico": "image/x-icon",
+    ".css": "text/css",
+    ".js": "application/javascript",
+}
 
 
 class FlowSurgeonASGI:
@@ -48,6 +65,15 @@ class FlowSurgeonASGI:
         for tracker in self._trackers:
             tracker.install()
 
+        # Merge explicit known_routes with auto-discovered routes (dedup, preserve order)
+        discovered = discover_routes(app)
+        seen: set[tuple[str, str]] = set()
+        self._app_routes: list[tuple[str, str]] = []
+        for route in list(self._config.known_routes) + discovered:
+            if route not in seen:
+                seen.add(route)
+                self._app_routes.append(route)
+
     # ------------------------------------------------------------------
     # ASGI entry point
     # ------------------------------------------------------------------
@@ -72,13 +98,22 @@ class FlowSurgeonASGI:
 
         path = scope.get("path", "/")
         debug_route = self._config.debug_route
+        qs = scope.get("query_string", b"").decode("latin-1")
+
+        # Static assets: /{debug_route}/_static/<filename>
+        static_prefix = debug_route + "/_static/"
+        if path.startswith(static_prefix):
+            filename = path[len(static_prefix):]
+            await self._serve_static(filename, send)
+            return
 
         if path == debug_route or path == debug_route + "/":
-            await self._serve_history(send)
+            await self._serve_history(send, qs)
             return
+
         if path.startswith(debug_route + "/"):
-            request_id = path[len(debug_route) + 1 :]
-            await self._serve_detail(request_id, send)
+            request_id = path[len(debug_route) + 1:]
+            await self._serve_detail(request_id, send, qs)
             return
 
         await self._profile_request(scope, receive, send, client_host, path)
@@ -107,48 +142,88 @@ class FlowSurgeonASGI:
     # Debug UI routes
     # ------------------------------------------------------------------
 
-    async def _serve_history(self, send: Send) -> None:
-        records = await self._storage.list_recent(limit=100)
-        body = render_history_page(records, self._config.debug_route).encode()
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [
-                    (b"content-type", b"text/html; charset=utf-8"),
-                    (b"content-length", str(len(body)).encode()),
-                ],
-            }
-        )
+    async def _serve_static(self, filename: str, send: Send) -> None:
+        ext = os.path.splitext(filename)[1].lower()
+        mime = _MIME_TYPES.get(ext, "application/octet-stream")
+        try:
+            data = _load_asset_bytes(filename)
+        except Exception:
+            body = b"Not found"
+            await send({
+                "type": "http.response.start", "status": 404,
+                "headers": [(b"content-type", b"text/plain"), (b"content-length", str(len(body)).encode())],
+            })
+            await send({"type": "http.response.body", "body": body})
+            return
+        await send({
+            "type": "http.response.start", "status": 200,
+            "headers": [(b"content-type", mime.encode()), (b"content-length", str(len(data)).encode())],
+        })
+        await send({"type": "http.response.body", "body": data})
+
+    async def _serve_history(self, send: Send, query_string: str = "") -> None:
+        view = _parse_qs_param(query_string, "view", "apis")
+        q = _parse_qs_param(query_string, "q", "")
+        status = _parse_qs_param(query_string, "status", "")
+        method = _parse_qs_param(query_string, "method", "")
+        path = _parse_qs_param(query_string, "path", "")
+        sort = _parse_qs_param(query_string, "sort", "duration")
+        amethod = _parse_qs_param(query_string, "amethod", "")
+        page = _parse_qs_int(query_string, "page", 1)
+
+        records = await self._storage.list_recent(limit=500)
+        body = render_history_page(
+            records,
+            self._config.debug_route,
+            view=view,
+            q=q,
+            status=status,
+            method_filter=method,
+            path_filter=path,
+            sort=sort,
+            apis_method=amethod,
+            app_routes=self._app_routes,
+            page=page,
+        ).encode()
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"text/html; charset=utf-8"),
+                (b"content-length", str(len(body)).encode()),
+            ],
+        })
         await send({"type": "http.response.body", "body": body})
 
-    async def _serve_detail(self, request_id: str, send: Send) -> None:
+    async def _serve_detail(self, request_id: str, send: Send, query_string: str = "") -> None:
+        tab = _parse_qs_param(query_string, "tab", "details")
         record = await self._storage.get(request_id)
         if record is None:
             body = b"<h1>Not found</h1>"
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": 404,
-                    "headers": [
-                        (b"content-type", b"text/html; charset=utf-8"),
-                        (b"content-length", str(len(body)).encode()),
-                    ],
-                }
-            )
-            await send({"type": "http.response.body", "body": body})
-            return
-        body = render_detail_page(record, self._config.debug_route).encode()
-        await send(
-            {
+            await send({
                 "type": "http.response.start",
-                "status": 200,
+                "status": 404,
                 "headers": [
                     (b"content-type", b"text/html; charset=utf-8"),
                     (b"content-length", str(len(body)).encode()),
                 ],
-            }
-        )
+            })
+            await send({"type": "http.response.body", "body": body})
+            return
+        body = render_detail_page(
+            record,
+            self._config.debug_route,
+            tab=tab,
+            slow_threshold=self._config.slow_query_threshold_ms,
+        ).encode()
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"text/html; charset=utf-8"),
+                (b"content-length", str(len(body)).encode()),
+            ],
+        })
         await send({"type": "http.response.body", "body": body})
 
     # ------------------------------------------------------------------
@@ -176,30 +251,23 @@ class FlowSurgeonASGI:
             ),
         )
 
-        # Capture response start + body chunks, detect if HTML to decide strategy
+        # Always buffer the full response so we can inspect/store the body.
+        # (This middleware is development-only, so no-streaming is acceptable.)
         start_message: dict | None = None
         is_html = False
-        forwarding = False  # True when we're in pass-through mode (non-HTML)
         body_chunks: list[bytes] = []
 
         async def capturing_send(message: dict) -> None:
-            nonlocal start_message, is_html, forwarding
+            nonlocal start_message, is_html
 
             if message["type"] == "http.response.start":
                 start_message = message
                 ct = _get_asgi_header(message.get("headers", []), b"content-type") or b""
                 is_html = any(h.encode() in ct for h in _HTML_CONTENT_TYPES)
-                if not is_html:
-                    # Non-HTML: forward start immediately and switch to pass-through
-                    await send(message)
-                    forwarding = True
                 return
 
             if message["type"] == "http.response.body":
-                if forwarding:
-                    await send(message)
-                else:
-                    body_chunks.append(message.get("body", b""))
+                body_chunks.append(message.get("body", b""))
 
         queries, token = (
             begin_query_collection()
@@ -220,39 +288,40 @@ class FlowSurgeonASGI:
         status_code: int = start_message["status"]
         resp_raw_headers: list[tuple[bytes, bytes]] = start_message.get("headers", [])
 
+        ct_header = (_get_asgi_header(resp_raw_headers, b"content-type") or b"").decode("latin-1")
+
         record.status_code = status_code
         record.duration_ms = duration_ms
         record.response_headers = _asgi_headers_to_dict(
             resp_raw_headers, self._config.strip_sensitive_headers
         )
         record.queries = queries
+        record.response_body = _decode_body(b"".join(body_chunks), ct_header)
 
         # Persist asynchronously (non-blocking)
         await self._storage.enqueue(record, self._config.max_stored_requests)
 
-        if forwarding:
-            # Already forwarded — nothing more to do
-            return
-
-        # HTML path: inject panel, then forward full response
         body = b"".join(body_chunks)
-        panel_html = render_panel(record, self._config.debug_route).encode()
-        if b"</body>" in body:
-            body = body.replace(b"</body>", panel_html + b"</body>", 1)
-        else:
-            body += panel_html
 
-        # Rebuild headers with updated Content-Length
+        if is_html:
+            panel_html = render_panel(
+                record,
+                self._config.debug_route,
+                slow_threshold=self._config.slow_query_threshold_ms,
+            ).encode()
+            if b"</body>" in body:
+                body = body.replace(b"</body>", panel_html + b"</body>", 1)
+            else:
+                body += panel_html
+
         updated_headers = [(k, v) for k, v in resp_raw_headers if k.lower() != b"content-length"]
         updated_headers.append((b"content-length", str(len(body)).encode()))
 
-        await send(
-            {
-                "type": "http.response.start",
-                "status": status_code,
-                "headers": updated_headers,
-            }
-        )
+        await send({
+            "type": "http.response.start",
+            "status": status_code,
+            "headers": updated_headers,
+        })
         await send({"type": "http.response.body", "body": body})
 
     # ------------------------------------------------------------------
@@ -266,6 +335,24 @@ class FlowSurgeonASGI:
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------
+
+
+def _parse_qs_param(query_string: str, key: str, default: str) -> str:
+    """Extract a single query-string parameter value (no urllib dependency)."""
+    for part in query_string.split("&"):
+        if "=" in part:
+            k, _, v = part.partition("=")
+            if k == key:
+                return v
+    return default
+
+
+def _parse_qs_int(query_string: str, key: str, default: int) -> int:
+    val = _parse_qs_param(query_string, key, "")
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default
 
 
 def _client_host(scope: Scope) -> str:
@@ -292,3 +379,14 @@ def _get_asgi_header(headers: list[tuple[bytes, bytes]], name: bytes) -> bytes |
         if k.lower() == name_lower:
             return v
     return None
+
+
+def _decode_body(body: bytes, content_type: str) -> str | None:
+    """Decode response body for storage; returns None for binary content types."""
+    if not any(t in content_type for t in _TEXT_CONTENT_TYPES):
+        return None
+    data = body[:_MAX_BODY_STORE]
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return data.decode("latin-1")

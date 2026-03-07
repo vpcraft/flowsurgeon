@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from typing import Callable, Iterable
 
@@ -9,7 +10,13 @@ from flowsurgeon.storage.base import StorageBackend
 from flowsurgeon.storage.sqlite import SQLiteBackend
 from flowsurgeon.trackers.base import QueryTracker
 from flowsurgeon.trackers.context import begin_query_collection, end_query_collection
-from flowsurgeon.ui.panel import render_detail_page, render_history_page, render_panel
+from flowsurgeon.ui.panel import (
+    _load_asset_bytes,
+    discover_routes,
+    render_detail_page,
+    render_history_page,
+    render_panel,
+)
 
 # WSGI type aliases
 Environ = dict
@@ -18,6 +25,16 @@ WSGIApp = Callable[[Environ, StartResponse], Iterable[bytes]]
 
 _REDACTED = b"[redacted]"
 _HTML_CONTENT_TYPES = ("text/html",)
+_TEXT_CONTENT_TYPES = ("text/", "application/json", "application/xml", "application/javascript")
+_MAX_BODY_STORE = 128 * 1024  # 128 KB
+_MIME_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".ico": "image/x-icon",
+    ".css": "text/css",
+    ".js": "application/javascript",
+}
 
 
 class FlowSurgeonWSGI:
@@ -49,6 +66,15 @@ class FlowSurgeonWSGI:
         for tracker in self._trackers:
             tracker.install()
 
+        # Merge explicit known_routes with auto-discovered routes (dedup, preserve order)
+        discovered = discover_routes(app)
+        seen: set[tuple[str, str]] = set()
+        self._app_routes: list[tuple[str, str]] = []
+        for route in list(self._config.known_routes) + discovered:
+            if route not in seen:
+                seen.add(route)
+                self._app_routes.append(route)
+
     def close(self) -> None:
         """Uninstall all trackers and release storage resources."""
         for tracker in self._trackers:
@@ -69,13 +95,19 @@ class FlowSurgeonWSGI:
 
         path = environ.get("PATH_INFO", "/")
         debug_route = self._config.debug_route
+        qs = environ.get("QUERY_STRING", "")
 
-        # Serve built-in debug UI routes
+        # Static assets: /{debug_route}/_static/<filename>
+        static_prefix = debug_route + "/_static/"
+        if path.startswith(static_prefix):
+            filename = path[len(static_prefix):]
+            return self._serve_static(filename, start_response)
+
         if path == debug_route or path == debug_route + "/":
-            return self._serve_history(environ, start_response)
+            return self._serve_history(environ, start_response, qs)
         if path.startswith(debug_route + "/"):
-            request_id = path[len(debug_route) + 1 :]
-            return self._serve_detail(request_id, environ, start_response)
+            request_id = path[len(debug_route) + 1:]
+            return self._serve_detail(request_id, environ, start_response, qs)
 
         return self._profile_request(environ, start_response, client_host, path)
 
@@ -83,9 +115,46 @@ class FlowSurgeonWSGI:
     # Debug UI routes
     # ------------------------------------------------------------------
 
-    def _serve_history(self, environ: Environ, start_response: StartResponse) -> Iterable[bytes]:
-        records = self._storage.list_recent(limit=100)
-        body = render_history_page(records, self._config.debug_route).encode()
+    def _serve_static(
+        self, filename: str, start_response: StartResponse
+    ) -> Iterable[bytes]:
+        ext = os.path.splitext(filename)[1].lower()
+        mime = _MIME_TYPES.get(ext, "application/octet-stream")
+        try:
+            data = _load_asset_bytes(filename)
+        except Exception:
+            body = b"Not found"
+            start_response("404 Not Found", [("Content-Type", "text/plain"), ("Content-Length", str(len(body)))])
+            return [body]
+        start_response("200 OK", [("Content-Type", mime), ("Content-Length", str(len(data)))])
+        return [data]
+
+    def _serve_history(
+        self, environ: Environ, start_response: StartResponse, query_string: str = ""
+    ) -> Iterable[bytes]:
+        view = _parse_qs_param(query_string, "view", "apis")
+        q = _parse_qs_param(query_string, "q", "")
+        status = _parse_qs_param(query_string, "status", "")
+        method = _parse_qs_param(query_string, "method", "")
+        path = _parse_qs_param(query_string, "path", "")
+        sort = _parse_qs_param(query_string, "sort", "duration")
+        amethod = _parse_qs_param(query_string, "amethod", "")
+        page = _parse_qs_int(query_string, "page", 1)
+
+        records = self._storage.list_recent(limit=500)
+        body = render_history_page(
+            records,
+            self._config.debug_route,
+            view=view,
+            q=q,
+            status=status,
+            method_filter=method,
+            path_filter=path,
+            sort=sort,
+            apis_method=amethod,
+            app_routes=self._app_routes,
+            page=page,
+        ).encode()
         start_response(
             "200 OK",
             [
@@ -96,8 +165,13 @@ class FlowSurgeonWSGI:
         return [body]
 
     def _serve_detail(
-        self, request_id: str, environ: Environ, start_response: StartResponse
+        self,
+        request_id: str,
+        environ: Environ,
+        start_response: StartResponse,
+        query_string: str = "",
     ) -> Iterable[bytes]:
+        tab = _parse_qs_param(query_string, "tab", "details")
         record = self._storage.get(request_id)
         if record is None:
             body = b"<h1>Not found</h1>"
@@ -109,7 +183,12 @@ class FlowSurgeonWSGI:
                 ],
             )
             return [body]
-        body = render_detail_page(record, self._config.debug_route).encode()
+        body = render_detail_page(
+            record,
+            self._config.debug_route,
+            tab=tab,
+            slow_threshold=self._config.slow_query_threshold_ms,
+        ).encode()
         start_response(
             "200 OK",
             [
@@ -163,29 +242,35 @@ class FlowSurgeonWSGI:
 
         resp_headers_dict = _headers_to_dict(resp_headers, self._config.strip_sensitive_headers)
 
+        content_type = _get_header(resp_headers, "content-type") or ""
+        body = b"".join(chunks)
+
         record.status_code = status_code
         record.duration_ms = duration_ms
         record.response_headers = resp_headers_dict
         record.queries = queries
+        record.response_body = _decode_body(body, content_type)
 
         # Persist
         self._storage.save(record)
         self._storage.prune(self._config.max_stored_requests)
 
         # Inject panel into HTML responses
-        content_type = _get_header(resp_headers, "content-type") or ""
         if any(ct in content_type for ct in _HTML_CONTENT_TYPES):
-            panel_html = render_panel(record, self._config.debug_route).encode()
-            # Insert panel before </body> if present, otherwise append
-            body = b"".join(chunks)
+            panel_html = render_panel(
+                record,
+                self._config.debug_route,
+                slow_threshold=self._config.slow_query_threshold_ms,
+            ).encode()
             if b"</body>" in body:
                 body = body.replace(b"</body>", panel_html + b"</body>", 1)
             else:
                 body = body + panel_html
             chunks = [body]
-            # Rebuild headers with updated Content-Length
             resp_headers = [(k, v) for k, v in resp_headers if k.lower() != "content-length"]
             resp_headers.append(("Content-Length", str(len(body))))
+        else:
+            chunks = [body]
 
         start_response(status_str, resp_headers)
         return chunks
@@ -201,6 +286,24 @@ class FlowSurgeonWSGI:
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------
+
+
+def _parse_qs_param(query_string: str, key: str, default: str) -> str:
+    """Extract a single query-string parameter value."""
+    for part in query_string.split("&"):
+        if "=" in part:
+            k, _, v = part.partition("=")
+            if k == key:
+                return v
+    return default
+
+
+def _parse_qs_int(query_string: str, key: str, default: int) -> int:
+    val = _parse_qs_param(query_string, key, "")
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default
 
 
 def _client_host(environ: Environ) -> str:
@@ -234,3 +337,14 @@ def _get_header(headers: list[tuple[str, str]], name: str) -> str | None:
         if k.lower() == lower:
             return v
     return None
+
+
+def _decode_body(body: bytes, content_type: str) -> str | None:
+    """Decode response body for storage; returns None for binary content types."""
+    if not any(t in content_type for t in _TEXT_CONTENT_TYPES):
+        return None
+    data = body[:_MAX_BODY_STORE]
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return data.decode("latin-1")

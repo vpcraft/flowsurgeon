@@ -213,21 +213,21 @@ class TestDebugRoutes:
     async def test_history_route_returns_html(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         app = FlowSurgeonASGI(_json_app, config=cfg)
-        status, _, body = await _call_app(app, _make_scope(path="/__flowsurgeon__"))
+        status, _, body = await _call_app(app, _make_scope(path="/flowsurgeon"))
         assert status == 200
-        assert b"Request History" in body
+        assert b"FlowSurgeon" in body
 
     async def test_history_route_trailing_slash(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         app = FlowSurgeonASGI(_json_app, config=cfg)
-        status, _, body = await _call_app(app, _make_scope(path="/__flowsurgeon__/"))
+        status, _, body = await _call_app(app, _make_scope(path="/flowsurgeon/"))
         assert status == 200
-        assert b"Request History" in body
+        assert b"FlowSurgeon" in body
 
     async def test_detail_route_not_found(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         app = FlowSurgeonASGI(_json_app, config=cfg)
-        status, _, _ = await _call_app(app, _make_scope(path="/__flowsurgeon__/nonexistent-id"))
+        status, _, _ = await _call_app(app, _make_scope(path="/flowsurgeon/nonexistent-id"))
         assert status == 404
 
     async def test_detail_route_returns_record(self, tmp_path):
@@ -239,7 +239,7 @@ class TestDebugRoutes:
         records = await storage.list_recent()
         record = records[0]
         status, _, body = await _call_app(
-            app, _make_scope(path=f"/__flowsurgeon__/{record.request_id}")
+            app, _make_scope(path=f"/flowsurgeon/{record.request_id}")
         )
         assert status == 200
         assert record.request_id.encode() in body

@@ -20,12 +20,14 @@ CREATE TABLE IF NOT EXISTS requests (
     client_host  TEXT NOT NULL DEFAULT '',
     req_headers  TEXT NOT NULL DEFAULT '{}',
     resp_headers TEXT NOT NULL DEFAULT '{}',
-    queries      TEXT NOT NULL DEFAULT '[]'
+    queries      TEXT NOT NULL DEFAULT '[]',
+    resp_body    TEXT
 );
 """
 
-# Migration: add the queries column to databases created before v0.3.0
+# Migrations for databases created before current version
 _ADD_QUERIES_COLUMN = "ALTER TABLE requests ADD COLUMN queries TEXT NOT NULL DEFAULT '[]'"
+_ADD_RESP_BODY_COLUMN = "ALTER TABLE requests ADD COLUMN resp_body TEXT"
 
 _CREATE_INDEX = """
 CREATE INDEX IF NOT EXISTS idx_requests_timestamp ON requests (timestamp DESC);
@@ -47,10 +49,11 @@ class SQLiteBackend(StorageBackend):
         conn = self._connect()
         conn.execute(_CREATE_TABLE)
         conn.execute(_CREATE_INDEX)
-        try:
-            conn.execute(_ADD_QUERIES_COLUMN)
-        except sqlite3.OperationalError:
-            pass  # column already exists (v0.3.0+ database)
+        for migration in (_ADD_QUERIES_COLUMN, _ADD_RESP_BODY_COLUMN):
+            try:
+                conn.execute(migration)
+            except sqlite3.OperationalError:
+                pass  # column already exists
         conn.commit()
 
     # ------------------------------------------------------------------
@@ -90,8 +93,9 @@ class SQLiteBackend(StorageBackend):
             """
             INSERT OR REPLACE INTO requests
                 (request_id, timestamp, method, path, query_string,
-                 status_code, duration_ms, client_host, req_headers, resp_headers, queries)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 status_code, duration_ms, client_host, req_headers, resp_headers, queries,
+                 resp_body)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 record.request_id,
@@ -105,6 +109,7 @@ class SQLiteBackend(StorageBackend):
                 json.dumps(record.request_headers),
                 json.dumps(record.response_headers),
                 queries_json,
+                record.response_body,
             ),
         )
         self._conn.commit()
@@ -167,4 +172,5 @@ def _row_to_record(row: sqlite3.Row) -> RequestRecord:
         request_headers=json.loads(row["req_headers"]),
         response_headers=json.loads(row["resp_headers"]),
         queries=queries,
+        response_body=row["resp_body"],
     )

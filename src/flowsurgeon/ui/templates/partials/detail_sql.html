@@ -1,0 +1,40 @@
+{% if record.queries %}
+<div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+  <div style="display:flex; gap:16px; align-items:center;">
+    <span style="color:#FFFFFF; font-size:20px; font-weight:700;">SQL Queries</span>
+    <span class="stat-badge" style="padding:4px 12px;">
+      <span style="font-size:12px; color:#9CA3AF;">{{ record.queries | length }} queries</span>
+    </span>
+    <span class="stat-badge" style="padding:4px 12px;">
+      <span style="font-size:12px; color:#9CA3AF;">{{ "%.1f"|format(sql_total_ms) }} ms total</span>
+    </span>
+  </div>
+</div>
+
+<div class="table-wrap" style="flex:1; min-height:0;">
+  <div class="tbl-body" style="padding:0 24px;">
+    {% for q in record.queries %}
+    <div class="query-item">
+      <div class="query-meta">
+        <span class="query-num">#{{ loop.index }}</span>
+        {% if q.duration_ms >= slow_threshold %}
+        <span class="badge-slow">slow</span>
+        {% endif %}
+        {% if sql_counts[q.sql] > 1 %}
+        <span class="badge-dup">dup</span>
+        {% endif %}
+        <span style="font-size:12px; color:#9CA3AF;">{{ "%.2f"|format(q.duration_ms) }} ms</span>
+      </div>
+      <div class="query-sql">{{ q.sql }}</div>
+      {% if q.params %}
+      <div class="query-detail">
+        <span>Params: <span style="color:#E5E7EB;">{{ q.params }}</span></span>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="empty">No SQL queries recorded for this request.</div>
+{% endif %}

@@ -30,3 +30,4 @@ class RequestRecord:
     response_headers: dict[str, str] = field(default_factory=dict)
     client_host: str = ""
     queries: list[QueryRecord] = field(default_factory=list)
+    response_body: str | None = None

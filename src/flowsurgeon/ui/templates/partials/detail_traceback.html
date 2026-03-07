@@ -1,0 +1,23 @@
+{% set traces = record.queries | selectattr("stack_trace") | list %}
+{% if traces %}
+<div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+  <span style="color:#FFFFFF; font-size:20px; font-weight:700;">Tracebacks</span>
+</div>
+
+<div style="display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1; min-height:0;">
+  {% for q in traces %}
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:12px; font-weight:600; color:#6B7280;">#{{ loop.index }}</span>
+      <span style="font-size:12px; color:#9CA3AF; font-family:monospace;">
+        {{ q.sql[:80] }}{% if q.sql|length > 80 %}…{% endif %}
+      </span>
+      <span style="font-size:11px; color:#6B7280;">{{ "%.2f"|format(q.duration_ms) }} ms</span>
+    </div>
+    <pre class="traceback">{{ q.stack_trace }}</pre>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">No stack traces available. Enable <code style="font-family:monospace; font-size:12px;">capture_query_stacktrace=True</code> in Config to capture them.</div>
+{% endif %}
