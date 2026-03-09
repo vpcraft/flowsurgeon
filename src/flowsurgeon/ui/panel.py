@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import importlib.resources
-from collections import defaultdict
+from collections import Counter, defaultdict
 from typing import Any
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -283,9 +283,7 @@ def render_panel(record: RequestRecord, debug_route: str, slow_threshold: float 
     """Return the HTML fragment for the inline debug panel."""
     css = _load_asset("panel.css")
     js = _load_asset("panel.js")
-    sql_counts: dict[str, int] = {}
-    for q in record.queries:
-        sql_counts[q.sql] = sql_counts.get(q.sql, 0) + 1
+    sql_counts: Counter[str] = Counter(q.sql for q in record.queries)
     sql_total_ms = sum(q.duration_ms for q in record.queries)
     tmpl = _env.get_template("panel.html")
     return tmpl.render(
@@ -359,9 +357,7 @@ def render_detail_page(
 ) -> str:
     """Return the full HTML detail page for a single request."""
     sql_total_ms = sum(q.duration_ms for q in record.queries)
-    sql_counts: dict[str, int] = {}
-    for q in record.queries:
-        sql_counts[q.sql] = sql_counts.get(q.sql, 0) + 1
+    sql_counts: Counter[str] = Counter(q.sql for q in record.queries)
     profile_stats = record.profile_stats or []
     max_ct_ms = max((s.ct_ms for s in profile_stats), default=1.0)
     tmpl = _env.get_template("detail.html")

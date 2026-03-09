@@ -48,6 +48,15 @@ class Config:
     profile_top_n: int = 50  # keep top N functions by cumulative time
     profile_user_code_only: bool = True  # filter out stdlib + third-party frames
 
+    def __post_init__(self) -> None:
+        # Clamp profile_top_n — negative values have no useful meaning.
+        if self.profile_top_n < 0:
+            self.profile_top_n = 0
+        # Ensure the parent directory of db_path exists so that SQLite can
+        # create the database file without a cryptic OperationalError.
+        parent = os.path.dirname(os.path.abspath(self.db_path))
+        os.makedirs(parent, exist_ok=True)
+
 
 def _env_bool(name: str, default: bool) -> bool:
     val = os.environ.get(name)

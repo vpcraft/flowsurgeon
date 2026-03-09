@@ -5,6 +5,14 @@ import os
 import time
 from typing import Awaitable, Callable
 
+from flowsurgeon._http import (
+    _HTML_CONTENT_TYPES,
+    _MIME_TYPES,
+    _decode_body,
+    _parse_qs_int,
+    _parse_qs_param,
+    _strip_ipv6_zone,
+)
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.profiling import _parse_profile
@@ -24,18 +32,6 @@ Scope = dict
 Receive = Callable[[], Awaitable[dict]]
 Send = Callable[[dict], Awaitable[None]]
 ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
-
-_HTML_CONTENT_TYPES = ("text/html",)
-_TEXT_CONTENT_TYPES = ("text/", "application/json", "application/xml", "application/javascript")
-_MAX_BODY_STORE = 128 * 1024  # 128 KB
-_MIME_TYPES = {
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".ico": "image/x-icon",
-    ".css": "text/css",
-    ".js": "application/javascript",
-}
 
 
 class FlowSurgeonASGI:
@@ -376,29 +372,11 @@ class FlowSurgeonASGI:
 # ---------------------------------------------------------------------------
 
 
-def _parse_qs_param(query_string: str, key: str, default: str) -> str:
-    """Extract a single query-string parameter value (no urllib dependency)."""
-    for part in query_string.split("&"):
-        if "=" in part:
-            k, _, v = part.partition("=")
-            if k == key:
-                return v
-    return default
-
-
-def _parse_qs_int(query_string: str, key: str, default: int) -> int:
-    val = _parse_qs_param(query_string, key, "")
-    try:
-        return int(val)
-    except (ValueError, TypeError):
-        return default
-
-
 def _client_host(scope: Scope) -> str:
     # Use only the actual TCP connection source — never X-Forwarded-For,
     # which is user-controlled and could be forged to bypass allowed_hosts.
     client = scope.get("client")
-    return client[0] if client else ""
+    return _strip_ipv6_zone(client[0]) if client else ""
 
 
 def _asgi_headers_to_dict(headers: list[tuple[bytes, bytes]], strip: list[str]) -> dict[str, str]:
@@ -418,12 +396,3 @@ def _get_asgi_header(headers: list[tuple[bytes, bytes]], name: bytes) -> bytes |
     return None
 
 
-def _decode_body(body: bytes, content_type: str) -> str | None:
-    """Decode response body for storage; returns None for binary content types."""
-    if not any(t in content_type for t in _TEXT_CONTENT_TYPES):
-        return None
-    data = body[:_MAX_BODY_STORE]
-    try:
-        return data.decode("utf-8")
-    except UnicodeDecodeError:
-        return data.decode("latin-1")

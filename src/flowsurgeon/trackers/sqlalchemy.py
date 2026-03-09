@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import contextvars
 import time
 import traceback
-import threading
 from typing import Any
 
 from flowsurgeon.core.records import QueryRecord
@@ -44,8 +44,12 @@ class SQLAlchemyTracker(QueryTracker):
     def __init__(self, engine: Any, *, capture_stacktrace: bool = False) -> None:
         self._engine = engine
         self._capture_stacktrace = capture_stacktrace
-        # Per-thread start-time storage (handles both sync and async via thread pool)
-        self._t0: threading.local = threading.local()
+        # ContextVar stores t0 per async task (coroutine context), so before/after
+        # hooks always share the same value even when the event loop switches tasks.
+        # A per-instance var avoids cross-tracker interference with multiple engines.
+        self._t0: contextvars.ContextVar[float | None] = contextvars.ContextVar(
+            f"_sqlalchemy_tracker_t0_{id(self)}", default=None
+        )
 
     def install(self) -> None:
         try:
@@ -82,7 +86,7 @@ class SQLAlchemyTracker(QueryTracker):
         context: Any,
         executemany: bool,
     ) -> None:
-        self._t0.value = time.perf_counter()
+        self._t0.set(time.perf_counter())
 
     def _after_execute(
         self,
@@ -93,8 +97,9 @@ class SQLAlchemyTracker(QueryTracker):
         context: Any,
         executemany: bool,
     ) -> None:
-        t0 = getattr(self._t0, "value", None)
+        t0 = self._t0.get()
         duration_ms = (time.perf_counter() - t0) * 1000 if t0 is not None else 0.0
+        self._t0.set(None)
 
         queries = get_current_queries()
         if queries is None:

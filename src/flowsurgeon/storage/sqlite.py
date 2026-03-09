@@ -187,13 +187,13 @@ def _row_to_record(row: sqlite3.Row) -> RequestRecord:
     if raw_profile:
         profile_stats = [
             ProfileStat(
-                file=p["file"],
-                line=p["line"],
-                func=p["func"],
-                prim_calls=p["prim_calls"],
-                calls=p["calls"],
-                tt_ms=p["tt_ms"],
-                ct_ms=p["ct_ms"],
+                file=p.get("file", ""),
+                line=p.get("line", 0),
+                func=p.get("func", ""),
+                prim_calls=p.get("prim_calls", 0),
+                calls=p.get("calls", 0),
+                tt_ms=p.get("tt_ms", 0.0),
+                ct_ms=p.get("ct_ms", 0.0),
                 callers=p.get("callers", []),
             )
             for p in json.loads(raw_profile)
