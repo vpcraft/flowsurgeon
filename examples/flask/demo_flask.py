@@ -1,10 +1,11 @@
-"""FlowSurgeon v0.3.0 — Flask demo (API-first, DBAPITracker).
+"""FlowSurgeon v0.5.0 — Flask demo (API-first, DBAPITracker + profiling).
 
 Run:
     uv run --group examples python examples/flask/demo_flask.py
 
-Then hit the API at http://127.0.0.1:5000 and inspect query tracking at:
-    http://127.0.0.1:5000/__flowsurgeon__/
+Debug UI → http://127.0.0.1:5000/flowsurgeon
+  - Latency tab: request grid
+  - Profile tab on each request: call-stack profiling (enable_profiling=True)
 
 Routes:
     GET /books                 list books   (1 SQL query)
@@ -59,6 +60,7 @@ app.wsgi_app = FlowSurgeonWSGI(
     app.wsgi_app,
     config=Config(
         enabled=True,
+        enable_profiling=True,
         db_path="flowsurgeon_flask.db",
         allowed_hosts=["127.0.0.1", "::1", "localhost"],
         slow_query_threshold_ms=50.0,
@@ -128,5 +130,5 @@ def boom():
 
 if __name__ == "__main__":
     print("FlowSurgeon Flask demo running at http://127.0.0.1:5000")
-    print("Query tracking UI: http://127.0.0.1:5000/__flowsurgeon__/")
+    print("Debug UI: http://127.0.0.1:5000/flowsurgeon")
     app.run(host="127.0.0.1", port=5000, debug=False)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 
 from flowsurgeon.core.config import Config
-from flowsurgeon.core.records import QueryRecord, RequestRecord
+from flowsurgeon.core.records import ProfileStat, QueryRecord, RequestRecord
 from flowsurgeon.middleware.asgi import FlowSurgeonASGI
 from flowsurgeon.middleware.wsgi import FlowSurgeonWSGI
 from flowsurgeon.storage.async_sqlite import AsyncSQLiteBackend
@@ -36,6 +36,7 @@ __all__ = [
     "FlowSurgeon",
     "FlowSurgeonASGI",
     "FlowSurgeonWSGI",
+    "ProfileStat",
     "QueryRecord",
     "QueryTracker",
     "RequestRecord",
@@ -43,4 +44,4 @@ __all__ = [
     "StorageBackend",
 ]
 
-__version__ = "0.4.1"
+__version__ = "0.5.0"

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.storage.sqlite import SQLiteBackend
+
+_log = logging.getLogger(__name__)
 
 
 class AsyncSQLiteBackend:
@@ -17,7 +20,7 @@ class AsyncSQLiteBackend:
 
     def __init__(self, db_path: str = "flowsurgeon.db") -> None:
         self._sync = SQLiteBackend(db_path)
-        self._queue: asyncio.Queue[tuple[RequestRecord, int] | None] = asyncio.Queue()
+        self._queue: asyncio.Queue[tuple[RequestRecord, int]] = asyncio.Queue()
         self._task: asyncio.Task | None = None
 
     # ------------------------------------------------------------------
@@ -31,9 +34,16 @@ class AsyncSQLiteBackend:
 
     async def close(self) -> None:
         """Drain the queue and shut down the background writer."""
-        if self._task and not self._task.done():
-            await self._queue.put(None)  # sentinel
-            await self._task
+        if self._task is not None and not self._task.done():
+            # Wait for every already-enqueued item to be processed, then cancel
+            # the idle writer. Using queue.join() is race-free: new items
+            # enqueued concurrently will be counted and waited for too.
+            await self._queue.join()
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
         await asyncio.to_thread(self._sync.close)
 
     # ------------------------------------------------------------------
@@ -66,14 +76,11 @@ class AsyncSQLiteBackend:
     async def _writer_loop(self) -> None:
         while True:
             item = await self._queue.get()
-            if item is None:
-                self._queue.task_done()
-                break
             record, max_stored = item
             try:
                 await asyncio.to_thread(self._sync.save, record)
                 await asyncio.to_thread(self._sync.prune, max_stored)
             except Exception:
-                pass  # don't crash the writer; errors logged by caller if needed
+                _log.exception("FlowSurgeon: error writing request record to storage")
             finally:
                 self._queue.task_done()

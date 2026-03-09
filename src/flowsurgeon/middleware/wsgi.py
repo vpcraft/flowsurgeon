@@ -1,11 +1,21 @@
 from __future__ import annotations
 
+import cProfile
 import os
 import time
 from typing import Callable, Iterable
 
+from flowsurgeon._http import (
+    _HTML_CONTENT_TYPES,
+    _MIME_TYPES,
+    _decode_body,
+    _parse_qs_int,
+    _parse_qs_param,
+    _strip_ipv6_zone,
+)
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
+from flowsurgeon.profiling import _parse_profile
 from flowsurgeon.storage.base import StorageBackend
 from flowsurgeon.storage.sqlite import SQLiteBackend
 from flowsurgeon.trackers.base import QueryTracker
@@ -22,18 +32,6 @@ from flowsurgeon.ui.panel import (
 Environ = dict
 StartResponse = Callable[[str, list[tuple[str, str]]], None]
 WSGIApp = Callable[[Environ, StartResponse], Iterable[bytes]]
-
-_HTML_CONTENT_TYPES = ("text/html",)
-_TEXT_CONTENT_TYPES = ("text/", "application/json", "application/xml", "application/javascript")
-_MAX_BODY_STORE = 128 * 1024  # 128 KB
-_MIME_TYPES = {
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".ico": "image/x-icon",
-    ".css": "text/css",
-    ".js": "application/javascript",
-}
 
 
 class FlowSurgeonWSGI:
@@ -155,6 +153,7 @@ class FlowSurgeonWSGI:
             order=order,
             show=show,
             page=page,
+            profiling_enabled=self._config.enable_profiling,
         ).encode()
         start_response(
             "200 OK",
@@ -232,11 +231,18 @@ class FlowSurgeonWSGI:
             if self._trackers and self._config.track_queries
             else ([], None)
         )
+        prof: cProfile.Profile | None = None
+        if self._config.enable_profiling:
+            prof = cProfile.Profile()
+            prof.enable()
         try:
             t0 = time.perf_counter()
             chunks = list(self._app(environ, capturing_start_response))
             duration_ms = (time.perf_counter() - t0) * 1000
         finally:
+            if prof is not None:
+                prof.disable()
+                record.profile_stats = _parse_profile(prof, self._config)
             if token is not None:
                 end_query_collection(token)
 
@@ -295,29 +301,11 @@ class FlowSurgeonWSGI:
 # ---------------------------------------------------------------------------
 
 
-def _parse_qs_param(query_string: str, key: str, default: str) -> str:
-    """Extract a single query-string parameter value."""
-    for part in query_string.split("&"):
-        if "=" in part:
-            k, _, v = part.partition("=")
-            if k == key:
-                return v
-    return default
-
-
-def _parse_qs_int(query_string: str, key: str, default: int) -> int:
-    val = _parse_qs_param(query_string, key, "")
-    try:
-        return int(val)
-    except (ValueError, TypeError):
-        return default
-
-
 def _client_host(environ: Environ) -> str:
     # Use only REMOTE_ADDR (the actual TCP connection source) — never
     # HTTP_X_FORWARDED_FOR, which is user-controlled and could be forged
     # to bypass the allowed_hosts check.
-    return environ.get("REMOTE_ADDR", "")
+    return _strip_ipv6_zone(environ.get("REMOTE_ADDR", ""))
 
 
 def _extract_request_headers(environ: Environ, strip: list[str]) -> dict[str, str]:
@@ -349,12 +337,3 @@ def _get_header(headers: list[tuple[str, str]], name: str) -> str | None:
     return None
 
 
-def _decode_body(body: bytes, content_type: str) -> str | None:
-    """Decode response body for storage; returns None for binary content types."""
-    if not any(t in content_type for t in _TEXT_CONTENT_TYPES):
-        return None
-    data = body[:_MAX_BODY_STORE]
-    try:
-        return data.decode("utf-8")
-    except UnicodeDecodeError:
-        return data.decode("latin-1")
