@@ -6,7 +6,7 @@
   [![PyPI version](https://img.shields.io/pypi/v/flowsurgeon.svg)](https://pypi.org/project/flowsurgeon/)
   [![Python 3.12+](https://img.shields.io/pypi/pyversions/flowsurgeon.svg)](https://pypi.org/project/flowsurgeon/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-  [![Tests](https://img.shields.io/github/actions/workflow/status/vpcraft/flowsurgeon/ci.yml?label=tests)](https://github.com/vpcraft/flowsurgeon/actions)
+  [![Tests](https://img.shields.io/github/actions/workflow/status/vpcraft/flowsurgeon/ci.yaml?label=tests)](https://github.com/vpcraft/flowsurgeon/actions)
   [![PyPI downloads](https://img.shields.io/pypi/dm/flowsurgeon.svg)](https://pypi.org/project/flowsurgeon/)
 </div>
 
@@ -24,8 +24,10 @@ FlowSurgeon wraps your existing WSGI or ASGI app with a single line. It injects 
 - **Auto-detect** WSGI vs ASGI via the `FlowSurgeon()` factory
 - **Inline debug panel** injected before `</body>` in every HTML response
 - **Built-in history UI** at `/flowsurgeon` — no extra server needed
+- **Request grid view** — browse captured requests sorted by query count, duration, or path
 - **SQL query tracking** via SQLAlchemy and DB-API 2.0 (sqlite3, psycopg2, …)
-- **Route auto-discovery** from Flask (`url_map`) and FastAPI/Starlette (`app.routes`) — endpoints appear in the UI before any traffic
+- **Profiling tab** — call-stack profiling per endpoint *(coming soon)*
+- **Route auto-discovery** from Flask (`url_map`) and FastAPI/Starlette (`app.routes`)
 - **Response body capture** — stores up to 128 KB for text/JSON/XML responses
 - **SQLite persistence** with auto-pruning (configurable max records)
 - **Sensitive header redaction** — `Authorization`, `Cookie`, `Set-Cookie` stripped by default
@@ -34,6 +36,10 @@ FlowSurgeon wraps your existing WSGI or ASGI app with a single line. It injects 
 ## Installation
 
 ```bash
+# Recommended
+uv add flowsurgeon
+
+# pip
 pip install flowsurgeon
 ```
 
@@ -151,7 +157,7 @@ Config(
     slow_query_threshold_ms=100.0,
     capture_query_stacktrace=False,
 
-    # Manually register routes shown in the APIs view before any traffic.
+    # Manually register routes shown in the UI before any traffic.
     # Flask and FastAPI routes are auto-discovered; use this for other cases.
     known_routes=[("GET", "/health"), ("POST", "/webhooks/stripe")],
 )
@@ -161,24 +167,15 @@ Config(
 
 | URL | Description |
 |---|---|
-| `/flowsurgeon` | API Endpoints — all registered routes with traffic metrics |
-| `/flowsurgeon?view=requests` | Recent Requests — filterable and paginated |
-| `/flowsurgeon?view=requests&path=/books&method=GET` | Requests for a specific endpoint |
+| `/flowsurgeon` | Requests grid — all captured requests with latency and query info |
+| `/flowsurgeon?view=profiling` | Profiling tab *(coming soon)* |
+| `/flowsurgeon?q=/books` | Filter requests by path |
+| `/flowsurgeon?order=duration` | Sort by duration (also: `queries`, `path`) |
 | `/flowsurgeon/{request_id}` | Request detail: headers, response body, SQL, tracebacks |
 
-### API Endpoints view
+### Requests view
 
-Lists every route in your app — including those with no traffic yet — sorted by latest duration by default. Columns: path, method, latest response time, SQL query count, SQL time, total requests, last request time, status.
-
-Click a row to jump to the filtered request history for that endpoint.
-
-Filters: method (GET / POST / PUT / PATCH / DELETE) and sort (Duration / Requests / Path / Method).
-
-### Recent Requests view
-
-Paginated list of captured requests (20 per page). Filter by path search, HTTP method, and status class (2xx / 3xx / 4xx / 5xx).
-
-When accessed from an API Endpoints row, shows a `← APIs` breadcrumb and filters automatically to that endpoint.
+Displays all captured requests as a card grid, sorted by number of queries by default. Each card shows: status code, HTTP method, path, total duration, query time and count. Supports filtering by path and ordering by query count, duration, or path.
 
 ### Request detail — three tabs
 

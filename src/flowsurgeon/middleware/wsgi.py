@@ -140,13 +140,10 @@ class FlowSurgeonWSGI:
     def _serve_history(
         self, environ: Environ, start_response: StartResponse, query_string: str = ""
     ) -> Iterable[bytes]:
-        view = _parse_qs_param(query_string, "view", "apis")
+        view = _parse_qs_param(query_string, "view", "latency")
         q = _parse_qs_param(query_string, "q", "")
-        status = _parse_qs_param(query_string, "status", "")
-        method = _parse_qs_param(query_string, "method", "")
-        path = _parse_qs_param(query_string, "path", "")
-        sort = _parse_qs_param(query_string, "sort", "duration")
-        amethod = _parse_qs_param(query_string, "amethod", "")
+        order = _parse_qs_param(query_string, "order", "queries")
+        show = _parse_qs_int(query_string, "show", 25)
         page = _parse_qs_int(query_string, "page", 1)
 
         records = self._storage.list_recent(limit=500)
@@ -155,12 +152,8 @@ class FlowSurgeonWSGI:
             self._config.debug_route,
             view=view,
             q=q,
-            status=status,
-            method_filter=method,
-            path_filter=path,
-            sort=sort,
-            apis_method=amethod,
-            app_routes=self._app_routes,
+            order=order,
+            show=show,
             page=page,
         ).encode()
         start_response(

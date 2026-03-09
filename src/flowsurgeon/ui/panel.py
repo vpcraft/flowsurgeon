@@ -75,6 +75,23 @@ def _method_class(method: str) -> str:
     return f"m-{m}" if m in _KNOWN_METHODS else "m-OTHER"
 
 
+def _card_status_class(status: int) -> str:
+    """Text-only color class for status codes in request cards."""
+    if status < 300:
+        return "cs-2xx"
+    if status < 400:
+        return "cs-3xx"
+    if status < 500:
+        return "cs-4xx"
+    return "cs-5xx"
+
+
+def _card_method_class(method: str) -> str:
+    """Text-only color class for HTTP methods in request cards."""
+    m = method.upper()
+    return f"cm-{m}" if m in _KNOWN_METHODS else "cm-OTHER"
+
+
 _env = Environment(
     loader=PackageLoader("flowsurgeon.ui", "templates"),
     autoescape=select_autoescape(["html"]),
@@ -84,6 +101,8 @@ _env.filters["duration_class"] = _duration_class
 _env.filters["queries_color"] = _queries_color
 _env.filters["status_text"] = _status_text
 _env.filters["method_class"] = _method_class
+_env.filters["card_status_class"] = _card_status_class
+_env.filters["card_method_class"] = _card_method_class
 
 
 # ---------------------------------------------------------------------------
@@ -284,59 +303,64 @@ def render_panel(record: RequestRecord, debug_route: str, slow_threshold: float 
 def render_history_page(
     records: list[RequestRecord],
     debug_route: str,
-    view: str = "apis",
-    # filters (requests view)
+    view: str = "latency",
+    # search / filter
     q: str = "",
-    status: str = "",
-    method_filter: str = "",
-    path_filter: str = "",
-    # APIs view options
-    sort: str = "duration",
-    apis_method: str = "",
-    # app routes for APIs view
-    app_routes: list[tuple[str, str]] | None = None,
+    # sorting for latency view: "queries" | "duration" | "path"
+    order: str = "queries",
+    # page size
+    show: int = 25,
     # pagination
     page: int = 1,
+    # kept for internal use (unused in new UI but kept for compat)
+    app_routes: list[tuple[str, str]] | None = None,
 ) -> str:
-    """Return the full HTML home page (APIs or Recent Requests view)."""
-    app_routes = app_routes or []
+    """Return the full HTML home page (Requests grid view)."""
+    tmpl = _env.get_template("home.html")
 
-    if view == "apis":
-        summaries = _build_endpoint_summaries(
-            records, app_routes, method_filter=apis_method, sort=sort
-        )
-        page_items, total_pages, page = _paginate(summaries, page)
-        tmpl = _env.get_template("home.html")
+    if view == "profiling":
         return tmpl.render(
             records=[],
-            endpoint_summaries=page_items,
-            total_summaries=len(summaries),
+            total_records=0,
             debug_route=debug_route,
-            active_view="apis",
-            sort=sort,
-            apis_method=apis_method,
-            page=page,
-            total_pages=total_pages,
-            page_size=_PAGE_SIZE,
+            active_view="profiling",
+            q="",
+            order=order,
+            show=show,
+            page=1,
+            total_pages=1,
+            page_start=0,
+            page_end=0,
         )
 
-    # Recent Requests view
-    filtered = _filter_records(records, q=q, status=status, method=method_filter, path=path_filter)
-    page_items, total_pages, page = _paginate(filtered, page)
-    tmpl = _env.get_template("home.html")
+    # Latency & Queries view: filter and sort recent requests
+    filtered = _filter_records(records, q=q)
+
+    if order == "duration":
+        filtered = sorted(filtered, key=lambda r: r.duration_ms, reverse=True)
+    elif order == "path":
+        filtered = sorted(filtered, key=lambda r: r.path)
+    else:  # "queries" (default)
+        filtered = sorted(filtered, key=lambda r: len(r.queries), reverse=True)
+
+    total = len(filtered)
+    total_pages = max(1, (total + show - 1) // show)
+    page = max(1, min(page, total_pages))
+    start = (page - 1) * show
+    page_items = filtered[start : start + show]
+
     return tmpl.render(
         records=page_items,
-        total_records=len(filtered),
-        endpoint_summaries=[],
+        total_records=total,
         debug_route=debug_route,
-        active_view="requests",
+        active_view="latency",
         q=q,
-        status_filter=status,
-        method_filter=method_filter,
-        path_filter=path_filter,
+        order=order,
+        show=show,
         page=page,
         total_pages=total_pages,
-        page_size=_PAGE_SIZE,
+        page_start=start + 1 if total > 0 else 0,
+        page_end=min(start + show, total),
     )
 
 

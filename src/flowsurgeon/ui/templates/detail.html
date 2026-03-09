@@ -6,11 +6,11 @@
 <nav class="topbar">
   <span class="logo">FlowSurgeon</span>
   <div class="breadcrumb">
-    <a class="b-dim" href="{{ debug_route }}">APIs</a>
+    <a class="b-dim" href="{{ debug_route }}">Requests</a>
     <span class="sep">›</span>
-    <a class="b-mid" href="{{ debug_route }}">{{ record.path }}</a>
+    <span class="b-mid">{{ record.path }}</span>
     <span class="sep">›</span>
-    <span class="b-cur">Request #{{ record.request_id[:8] }}</span>
+    <span class="b-cur">{{ record.request_id[:8] }}</span>
   </div>
 </nav>
 {% endblock %}

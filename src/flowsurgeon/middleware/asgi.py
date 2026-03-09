@@ -189,13 +189,10 @@ class FlowSurgeonASGI:
         await send({"type": "http.response.body", "body": data})
 
     async def _serve_history(self, send: Send, query_string: str = "") -> None:
-        view = _parse_qs_param(query_string, "view", "apis")
+        view = _parse_qs_param(query_string, "view", "latency")
         q = _parse_qs_param(query_string, "q", "")
-        status = _parse_qs_param(query_string, "status", "")
-        method = _parse_qs_param(query_string, "method", "")
-        path = _parse_qs_param(query_string, "path", "")
-        sort = _parse_qs_param(query_string, "sort", "duration")
-        amethod = _parse_qs_param(query_string, "amethod", "")
+        order = _parse_qs_param(query_string, "order", "queries")
+        show = _parse_qs_int(query_string, "show", 25)
         page = _parse_qs_int(query_string, "page", 1)
 
         records = await self._storage.list_recent(limit=500)
@@ -204,12 +201,8 @@ class FlowSurgeonASGI:
             self._config.debug_route,
             view=view,
             q=q,
-            status=status,
-            method_filter=method,
-            path_filter=path,
-            sort=sort,
-            apis_method=amethod,
-            app_routes=self._app_routes,
+            order=order,
+            show=show,
             page=page,
         ).encode()
         await send(
