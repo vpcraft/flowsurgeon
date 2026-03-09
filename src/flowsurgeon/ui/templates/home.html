@@ -113,7 +113,11 @@
         d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
     </svg>
     <span class="profiling-title">Profiling</span>
-    <span class="profiling-sub">Coming soon — call-stack profiling per endpoint.</span>
+    {% if profiling_enabled %}
+    <span class="profiling-sub">Call-stack profiling is enabled — open any request and click the <strong style="color:#9CA3AF;">Profile</strong> tab to inspect its call graph.</span>
+    {% else %}
+    <span class="profiling-sub">Enable <code style="font-family:monospace; font-size:13px; color:#9CA3AF;">enable_profiling=True</code> in Config to capture per-request call-stack data.</span>
+    {% endif %}
   </div>
 
 </div>

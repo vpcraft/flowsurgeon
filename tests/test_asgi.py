@@ -292,7 +292,7 @@ class TestLifespan:
     async def test_lifespan_starts_and_stops_storage(self, tmp_path):
         cfg = _enabled_config(tmp_path)
         storage = AsyncSQLiteBackend(cfg.db_path)
-        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+        # app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
 
         lifespan_events = [
             {"type": "lifespan.startup"},

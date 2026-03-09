@@ -41,6 +41,12 @@ class Config:
     # (METHOD, path) pairs shown in the APIs view before any traffic is recorded.
     # Auto-populated by the middleware via Flask/FastAPI/Starlette route discovery.
     known_routes: list[tuple[str, str]] = field(default_factory=list)
+    # Call-stack profiling (cProfile). Off by default; adds ~1-10% overhead.
+    enable_profiling: bool = field(
+        default_factory=lambda: _env_bool("FLOWSURGEON_PROFILING", False)
+    )
+    profile_top_n: int = 50  # keep top N functions by cumulative time
+    profile_user_code_only: bool = True  # filter out stdlib + third-party frames
 
 
 def _env_bool(name: str, default: bool) -> bool:

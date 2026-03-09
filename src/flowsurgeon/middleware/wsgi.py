@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import cProfile
 import os
 import time
 from typing import Callable, Iterable
 
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
+from flowsurgeon.profiling import _parse_profile
 from flowsurgeon.storage.base import StorageBackend
 from flowsurgeon.storage.sqlite import SQLiteBackend
 from flowsurgeon.trackers.base import QueryTracker
@@ -155,6 +157,7 @@ class FlowSurgeonWSGI:
             order=order,
             show=show,
             page=page,
+            profiling_enabled=self._config.enable_profiling,
         ).encode()
         start_response(
             "200 OK",
@@ -232,11 +235,18 @@ class FlowSurgeonWSGI:
             if self._trackers and self._config.track_queries
             else ([], None)
         )
+        prof: cProfile.Profile | None = None
+        if self._config.enable_profiling:
+            prof = cProfile.Profile()
+            prof.enable()
         try:
             t0 = time.perf_counter()
             chunks = list(self._app(environ, capturing_start_response))
             duration_ms = (time.perf_counter() - t0) * 1000
         finally:
+            if prof is not None:
+                prof.disable()
+                record.profile_stats = _parse_profile(prof, self._config)
             if token is not None:
                 end_query_collection(token)
 

@@ -1,10 +1,11 @@
-"""FlowSurgeon v0.3.0 — FastAPI demo (API-first, SQLAlchemyTracker).
+"""FlowSurgeon v0.5.0 — FastAPI demo (API-first, SQLAlchemyTracker + profiling).
 
 Run:
     uv run --group examples uvicorn examples.fastapi.demo_fastapi:app --reload
 
-Then hit the API at http://127.0.0.1:8000 and inspect query tracking at:
-    http://127.0.0.1:8000/__flowsurgeon__/
+Debug UI → http://127.0.0.1:8000/flowsurgeon
+  - Latency tab: request grid
+  - Profile tab on each request: call-stack profiling (enable_profiling=True)
 
 Routes:
     GET /books                 list books   (1 SQL query)
@@ -72,6 +73,7 @@ app = FlowSurgeon(
     _inner,
     config=Config(
         enabled=True,
+        enable_profiling=True,
         db_path="flowsurgeon_fastapi.db",
         allowed_hosts=["127.0.0.1", "::1", "localhost"],
         slow_query_threshold_ms=50.0,

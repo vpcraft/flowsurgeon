@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import cProfile
 import os
 import time
 from typing import Awaitable, Callable
 
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
+from flowsurgeon.profiling import _parse_profile
 from flowsurgeon.storage.async_sqlite import AsyncSQLiteBackend
 from flowsurgeon.trackers.base import QueryTracker
 from flowsurgeon.trackers.context import begin_query_collection, end_query_collection
@@ -204,6 +206,7 @@ class FlowSurgeonASGI:
             order=order,
             show=show,
             page=page,
+            profiling_enabled=self._config.enable_profiling,
         ).encode()
         await send(
             {
@@ -302,11 +305,18 @@ class FlowSurgeonASGI:
             if self._trackers and self._config.track_queries
             else ([], None)
         )
+        prof: cProfile.Profile | None = None
+        if self._config.enable_profiling:
+            prof = cProfile.Profile()
+            prof.enable()
         try:
             t0 = time.perf_counter()
             await self._app(scope, receive, capturing_send)
             duration_ms = (time.perf_counter() - t0) * 1000
         finally:
+            if prof is not None:
+                prof.disable()
+                record.profile_stats = _parse_profile(prof, self._config)
             if token is not None:
                 end_query_collection(token)
 

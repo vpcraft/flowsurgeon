@@ -26,7 +26,7 @@ FlowSurgeon wraps your existing WSGI or ASGI app with a single line. It injects 
 - **Built-in history UI** at `/flowsurgeon` — no extra server needed
 - **Request grid view** — browse captured requests sorted by query count, duration, or path
 - **SQL query tracking** via SQLAlchemy and DB-API 2.0 (sqlite3, psycopg2, …)
-- **Profiling tab** — call-stack profiling per endpoint *(coming soon)*
+- **Call-stack profiling** — `cProfile`-based per-request profiling with a sortable stats table and callers drilldown (opt-in via `enable_profiling=True`)
 - **Route auto-discovery** from Flask (`url_map`) and FastAPI/Starlette (`app.routes`)
 - **Response body capture** — stores up to 128 KB for text/JSON/XML responses
 - **SQLite persistence** with auto-pruning (configurable max records)
@@ -157,6 +157,12 @@ Config(
     slow_query_threshold_ms=100.0,
     capture_query_stacktrace=False,
 
+    # Call-stack profiling (cProfile). Off by default; adds ~1-10% overhead.
+    # Also controlled by FLOWSURGEON_PROFILING env var.
+    enable_profiling=False,
+    profile_top_n=50,              # keep top N functions by cumulative time
+    profile_user_code_only=True,   # filter out stdlib + third-party frames
+
     # Manually register routes shown in the UI before any traffic.
     # Flask and FastAPI routes are auto-discovered; use this for other cases.
     known_routes=[("GET", "/health"), ("POST", "/webhooks/stripe")],
@@ -168,20 +174,43 @@ Config(
 | URL | Description |
 |---|---|
 | `/flowsurgeon` | Requests grid — all captured requests with latency and query info |
-| `/flowsurgeon?view=profiling` | Profiling tab *(coming soon)* |
+| `/flowsurgeon?view=profiling` | Profiling tab — list of profiled requests with top hotspot function |
 | `/flowsurgeon?q=/books` | Filter requests by path |
 | `/flowsurgeon?order=duration` | Sort by duration (also: `queries`, `path`) |
-| `/flowsurgeon/{request_id}` | Request detail: headers, response body, SQL, tracebacks |
+| `/flowsurgeon/{request_id}` | Request detail: headers, response body, SQL, tracebacks, profile |
 
 ### Requests view
 
 Displays all captured requests as a card grid, sorted by number of queries by default. Each card shows: status code, HTTP method, path, total duration, query time and count. Supports filtering by path and ordering by query count, duration, or path.
 
-### Request detail — three tabs
+### Request detail — four tabs
 
 - **Details** — stat cards (status, duration, SQL count, SQL time); request headers; response headers and body (up to 128 KB for text/JSON content types)
 - **SQL** — every captured query with timing, `slow` badge (exceeds threshold), `dup` badge (same SQL run more than once), and bound params
 - **Traceback** — Python stack trace per query (requires `capture_query_stacktrace=True`)
+- **Profile** — `cProfile` call-stack stats: function name, file:line, calls, own time, total time, visual time bar, and a native `<details>` callers drilldown per function (requires `enable_profiling=True`)
+
+### Call-stack profiling
+
+```python
+app = FlowSurgeon(
+    _app,
+    config=Config(
+        enabled=True,
+        enable_profiling=True,         # enable cProfile per request
+        profile_top_n=50,              # keep top 50 functions by cumulative time
+        profile_user_code_only=True,   # hide stdlib + third-party frames
+    ),
+)
+```
+
+Or via environment variable (no code changes needed):
+
+```bash
+FLOWSURGEON_ENABLED=1 FLOWSURGEON_PROFILING=1 uvicorn myapp:app
+```
+
+**ASGI note:** `cProfile` measures CPU time while the coroutine is on-thread. I/O-wait time (e.g. awaiting a DB call) appears as event-loop time rather than in the awaited coroutine's frame. CPU-bound hotspots are captured accurately.
 
 ## Running the examples
 

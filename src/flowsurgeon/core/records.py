@@ -16,6 +16,21 @@ class QueryRecord:
 
 
 @dataclass
+class ProfileStat:
+    """Call-stack stats for a single function from cProfile."""
+
+    file: str = ""  # path relative to cwd
+    line: int = 0
+    func: str = ""  # co_qualname
+    prim_calls: int = 0  # non-recursive call count
+    calls: int = 0  # total call count
+    tt_ms: float = 0.0  # own time (exclusive of callees), ms
+    ct_ms: float = 0.0  # cumulative time (inclusive of callees), ms
+    # top-3 callers by ct_ms: [(file, func, line, ct_ms), ...]
+    callers: list = field(default_factory=list)
+
+
+@dataclass
 class RequestRecord:
     """Captured data for a single HTTP request."""
 
@@ -31,3 +46,4 @@ class RequestRecord:
     client_host: str = ""
     queries: list[QueryRecord] = field(default_factory=list)
     response_body: str | None = None
+    profile_stats: list[ProfileStat] | None = None  # None = profiling not enabled

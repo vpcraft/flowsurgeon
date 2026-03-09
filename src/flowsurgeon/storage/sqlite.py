@@ -5,7 +5,7 @@ import sqlite3
 import threading
 from datetime import datetime, timezone
 
-from flowsurgeon.core.records import QueryRecord, RequestRecord
+from flowsurgeon.core.records import ProfileStat, QueryRecord, RequestRecord
 from flowsurgeon.storage.base import StorageBackend
 
 _CREATE_TABLE = """
@@ -21,13 +21,15 @@ CREATE TABLE IF NOT EXISTS requests (
     req_headers  TEXT NOT NULL DEFAULT '{}',
     resp_headers TEXT NOT NULL DEFAULT '{}',
     queries      TEXT NOT NULL DEFAULT '[]',
-    resp_body    TEXT
+    resp_body    TEXT,
+    profile_stats TEXT
 );
 """
 
 # Migrations for databases created before current version
 _ADD_QUERIES_COLUMN = "ALTER TABLE requests ADD COLUMN queries TEXT NOT NULL DEFAULT '[]'"
 _ADD_RESP_BODY_COLUMN = "ALTER TABLE requests ADD COLUMN resp_body TEXT"
+_ADD_PROFILE_STATS_COLUMN = "ALTER TABLE requests ADD COLUMN profile_stats TEXT"
 
 _CREATE_INDEX = """
 CREATE INDEX IF NOT EXISTS idx_requests_timestamp ON requests (timestamp DESC);
@@ -49,7 +51,7 @@ class SQLiteBackend(StorageBackend):
         conn = self._connect()
         conn.execute(_CREATE_TABLE)
         conn.execute(_CREATE_INDEX)
-        for migration in (_ADD_QUERIES_COLUMN, _ADD_RESP_BODY_COLUMN):
+        for migration in (_ADD_QUERIES_COLUMN, _ADD_RESP_BODY_COLUMN, _ADD_PROFILE_STATS_COLUMN):
             try:
                 conn.execute(migration)
             except sqlite3.OperationalError:
@@ -89,13 +91,32 @@ class SQLiteBackend(StorageBackend):
                 for q in record.queries
             ]
         )
+        profile_json = (
+            json.dumps(
+                [
+                    {
+                        "file": s.file,
+                        "line": s.line,
+                        "func": s.func,
+                        "prim_calls": s.prim_calls,
+                        "calls": s.calls,
+                        "tt_ms": s.tt_ms,
+                        "ct_ms": s.ct_ms,
+                        "callers": s.callers,
+                    }
+                    for s in record.profile_stats
+                ]
+            )
+            if record.profile_stats is not None
+            else None
+        )
         self._conn.execute(
             """
             INSERT OR REPLACE INTO requests
                 (request_id, timestamp, method, path, query_string,
                  status_code, duration_ms, client_host, req_headers, resp_headers, queries,
-                 resp_body)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 resp_body, profile_stats)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 record.request_id,
@@ -110,6 +131,7 @@ class SQLiteBackend(StorageBackend):
                 json.dumps(record.response_headers),
                 queries_json,
                 record.response_body,
+                profile_json,
             ),
         )
         self._conn.commit()
@@ -160,6 +182,22 @@ def _row_to_record(row: sqlite3.Row) -> RequestRecord:
         )
         for q in raw_queries
     ]
+    raw_profile = row["profile_stats"] if "profile_stats" in row.keys() else None
+    profile_stats: list[ProfileStat] | None = None
+    if raw_profile:
+        profile_stats = [
+            ProfileStat(
+                file=p["file"],
+                line=p["line"],
+                func=p["func"],
+                prim_calls=p["prim_calls"],
+                calls=p["calls"],
+                tt_ms=p["tt_ms"],
+                ct_ms=p["ct_ms"],
+                callers=p.get("callers", []),
+            )
+            for p in json.loads(raw_profile)
+        ]
     return RequestRecord(
         request_id=row["request_id"],
         timestamp=datetime.fromisoformat(row["timestamp"]).replace(tzinfo=timezone.utc),
@@ -173,4 +211,5 @@ def _row_to_record(row: sqlite3.Row) -> RequestRecord:
         response_headers=json.loads(row["resp_headers"]),
         queries=queries,
         response_body=row["resp_body"],
+        profile_stats=profile_stats,
     )

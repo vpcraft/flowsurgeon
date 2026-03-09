@@ -314,6 +314,8 @@ def render_history_page(
     page: int = 1,
     # kept for internal use (unused in new UI but kept for compat)
     app_routes: list[tuple[str, str]] | None = None,
+    # whether profiling is enabled (shown in the Profiling tab empty state)
+    profiling_enabled: bool = False,
 ) -> str:
     """Return the full HTML home page (Requests grid view)."""
     tmpl = _env.get_template("home.html")
@@ -337,6 +339,7 @@ def render_history_page(
 
     return tmpl.render(
         records=page_items,
+        all_records=records,  # needed by Profiling tab (not filtered/paginated)
         total_records=total,
         debug_route=debug_route,
         active_view=view,  # "latency" or "profiling" — Alpine initializes tab from this
@@ -347,6 +350,7 @@ def render_history_page(
         total_pages=total_pages,
         page_start=start + 1 if total > 0 else 0,
         page_end=min(start + show, total),
+        profiling_enabled=profiling_enabled,
     )
 
 
@@ -358,6 +362,8 @@ def render_detail_page(
     sql_counts: dict[str, int] = {}
     for q in record.queries:
         sql_counts[q.sql] = sql_counts.get(q.sql, 0) + 1
+    profile_stats = record.profile_stats or []
+    max_ct_ms = max((s.ct_ms for s in profile_stats), default=1.0)
     tmpl = _env.get_template("detail.html")
     return tmpl.render(
         record=record,
@@ -366,4 +372,6 @@ def render_detail_page(
         sql_total_ms=sql_total_ms,
         sql_counts=sql_counts,
         slow_threshold=slow_threshold,
+        profile_stats=profile_stats,
+        max_ct_ms=max_ct_ms,
     )
