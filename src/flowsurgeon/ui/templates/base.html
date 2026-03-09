@@ -9,7 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="{{ debug_route }}/_static/alpine.min.js" defer></script>
   <style>
+    [x-cloak] { display: none !important; }
     *,
     *::before,
     *::after {
@@ -932,6 +934,26 @@
       flex-shrink: 0;
     }
 
+    /* ── SPA layout helpers ── */
+    .spa-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* Flex-column wrapper for each tab panel */
+    .tab-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar {
       width: 6px;
@@ -949,7 +971,7 @@
   </style>
 </head>
 
-<body>
+<body {% block body_attrs %}{% endblock %}>
   {% block topbar %}{% endblock %}
   {% block subnav %}{% endblock %}
   <main class="content">

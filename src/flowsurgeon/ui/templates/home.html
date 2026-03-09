@@ -13,104 +13,108 @@
 {% endblock %}
 
 {% block content %}
-{# Build page base URL for pagination (omit defaults to keep URLs clean) #}
-{% set pb = debug_route + "?view=" + active_view %}
+{# Pagination base URL always uses view=latency so page links land on the latency tab #}
+{% set pb = debug_route + "?view=latency" %}
 {% if q %}{% set pb = pb + "&q=" + q %}{% endif %}
 {% if order and order != "queries" %}{% set pb = pb + "&order=" + order %}{% endif %}
 {% if show and show != 25 %}{% set pb = pb + "&show=" + show|string %}{% endif %}
 {% set pb = pb + "&" %}
 
-<div class="section-header">
-  <h1 class="section-title">Requests</h1>
-  {% if active_view != "profiling" %}
-  <div class="stat-badge">
-    <span class="dot"></span>
-    <span>{{ total_records }} request{% if total_records != 1 %}s{% endif %}</span>
-  </div>
-  {% endif %}
-</div>
+<div class="spa-wrapper" x-data="{ tab: '{{ active_view }}' }">
 
-{# Controls row: tab buttons (left) + filters (right) #}
-<div class="controls-row">
-  <div class="tab-btns">
-    <a class="tab-btn {% if active_view == 'latency' %}tab-btn-active{% endif %}"
-      href="{{ debug_route }}?view=latency{% if q %}&q={{ q }}{% endif %}{% if order and order != 'queries' %}&order={{ order }}{% endif %}{% if show and show != 25 %}&show={{ show }}{% endif %}">
-      Latency &amp; Queries
-    </a>
-    <a class="tab-btn {% if active_view == 'profiling' %}tab-btn-active{% endif %}"
-      href="{{ debug_route }}?view=profiling">
-      Profiling
-    </a>
-  </div>
-
-  {% if active_view == 'latency' %}
-  <form method="get" action="{{ debug_route }}" class="filter-right">
-    <input type="hidden" name="view" value="latency">
-    <span class="filter-label">Path:</span>
-    <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input" style="width:240px;">
-    <span class="filter-label">Show:</span>
-    <select name="show" class="filter-select" style="width:72px;" onchange="this.form.submit()">
-      {% for n in [25, 50, 100] %}
-      <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
-      {% endfor %}
-    </select>
-    <span class="filter-label">Order:</span>
-    <select name="order" class="filter-select" style="width:160px;" onchange="this.form.submit()">
-      <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
-      <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
-      <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
-    </select>
-    <button type="submit" class="filter-btn" style="display:none;">Apply</button>
-  </form>
-  {% endif %}
-</div>
-
-{% if active_view == 'profiling' %}
-{# ── Profiling placeholder ── #}
-<div class="profiling-placeholder">
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="1.5"
-    stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path
-      d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
-  </svg>
-  <span class="profiling-title">Profiling</span>
-  <span class="profiling-sub">Coming soon — call-stack profiling per endpoint.</span>
-</div>
-
-{% else %}
-{# ── Latency & Queries grid ── #}
-{% if records %}
-<div class="req-grid">
-  {% for r in records %}
-  {% set qms = namespace(val=0.0) %}
-  {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
-  <a class="req-card" href="{{ debug_route }}/{{ r.request_id }}">
-    <div class="req-card-top">
-      <span class="{{ r.status_code | card_status_class }}">{{ r.status_code }}</span>
-      <span class="{{ r.method | card_method_class }}">{{ r.method }}</span>
+  {# ── Section header ── #}
+  <div class="section-header">
+    <h1 class="section-title">Requests</h1>
+    <div class="stat-badge" x-show="tab === 'latency'" x-cloak>
+      <span class="dot"></span>
+      <span>{{ total_records }} request{% if total_records != 1 %}s{% endif %}</span>
     </div>
-    <span class="req-path">{{ r.path }}</span>
-    <span class="req-dur {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }}ms overall</span>
-    <span class="req-qinfo">{{ "%.0f"|format(qms.val) }}ms on queries&nbsp;&middot;&nbsp;{{ r.queries | length }}
-      quer{% if r.queries | length != 1 %}ies{% else %}y{% endif %}</span>
-  </a>
-  {% endfor %}
-</div>
-{% else %}
-<div class="empty">No requests recorded{% if q %} matching &ldquo;{{ q }}&rdquo;{% endif %}.</div>
-{% endif %}
-
-{% if total_pages > 1 %}
-<div class="pagination-row">
-  <span class="page-info">Showing {{ page_start }}–{{ page_end }} of {{ total_records }} requests</span>
-  <div class="pagination">
-    {% if page > 1 %}<a class="page-btn" href="{{ pb }}page={{ page - 1 }}">← Prev</a>{% endif %}
-    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
-    {% if page < total_pages %}<a class="page-btn" href="{{ pb }}page={{ page + 1 }}">Next →</a>{% endif %}
   </div>
-</div>
-{% endif %}
 
-{% endif %}
+  {# ── Controls row: tab buttons (left) + filters (right) ── #}
+  <div class="controls-row">
+    <div class="tab-btns">
+      <a class="tab-btn"
+        :class="tab === 'latency' ? 'tab-btn-active' : ''"
+        href="{{ debug_route }}?view=latency{% if q %}&q={{ q }}{% endif %}{% if order and order != 'queries' %}&order={{ order }}{% endif %}{% if show and show != 25 %}&show={{ show }}{% endif %}"
+        @click.prevent="tab = 'latency'">
+        Latency &amp; Queries
+      </a>
+      <a class="tab-btn"
+        :class="tab === 'profiling' ? 'tab-btn-active' : ''"
+        href="{{ debug_route }}?view=profiling"
+        @click.prevent="tab = 'profiling'">
+        Profiling
+      </a>
+    </div>
+
+    <form method="get" action="{{ debug_route }}" class="filter-right"
+      x-show="tab === 'latency'" x-cloak>
+      <input type="hidden" name="view" value="latency">
+      <span class="filter-label">Path:</span>
+      <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input" style="width:240px;">
+      <span class="filter-label">Show:</span>
+      <select name="show" class="filter-select" style="width:72px;" onchange="this.form.submit()">
+        {% for n in [25, 50, 100] %}
+        <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
+        {% endfor %}
+      </select>
+      <span class="filter-label">Order:</span>
+      <select name="order" class="filter-select" style="width:160px;" onchange="this.form.submit()">
+        <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
+        <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
+        <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
+      </select>
+      <button type="submit" class="filter-btn" style="display:none;">Apply</button>
+    </form>
+  </div>
+
+  {# ── Latency & Queries panel ── #}
+  <div class="tab-panel" x-show="tab === 'latency'">
+    {% if records %}
+    <div class="req-grid">
+      {% for r in records %}
+      {% set qms = namespace(val=0.0) %}
+      {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
+      <a class="req-card" href="{{ debug_route }}/{{ r.request_id }}">
+        <div class="req-card-top">
+          <span class="{{ r.status_code | card_status_class }}">{{ r.status_code }}</span>
+          <span class="{{ r.method | card_method_class }}">{{ r.method }}</span>
+        </div>
+        <span class="req-path">{{ r.path }}</span>
+        <span class="req-dur {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }}ms overall</span>
+        <span class="req-qinfo">{{ "%.0f"|format(qms.val) }}ms on queries&nbsp;&middot;&nbsp;{{ r.queries | length }}
+          quer{% if r.queries | length != 1 %}ies{% else %}y{% endif %}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">No requests recorded{% if q %} matching &ldquo;{{ q }}&rdquo;{% endif %}.</div>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+    <div class="pagination-row">
+      <span class="page-info">Showing {{ page_start }}–{{ page_end }} of {{ total_records }} requests</span>
+      <div class="pagination">
+        {% if page > 1 %}<a class="page-btn" href="{{ pb }}page={{ page - 1 }}">← Prev</a>{% endif %}
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}<a class="page-btn" href="{{ pb }}page={{ page + 1 }}">Next →</a>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Profiling panel ── #}
+  <div class="profiling-placeholder" x-show="tab === 'profiling'" x-cloak>
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="1.5"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+    </svg>
+    <span class="profiling-title">Profiling</span>
+    <span class="profiling-sub">Coming soon — call-stack profiling per endpoint.</span>
+  </div>
+
+</div>
 {% endblock %}

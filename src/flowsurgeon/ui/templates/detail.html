@@ -2,6 +2,8 @@
 
 {% block title %}FlowSurgeon — {{ record.method }} {{ record.path }}{% endblock %}
 
+{% block body_attrs %}x-data="{ tab: '{{ active_tab }}' }"{% endblock %}
+
 {% block topbar %}
 <nav class="topbar">
   <span class="logo">FlowSurgeon</span>
@@ -17,144 +19,154 @@
 
 {% block subnav %}
 <div class="subnav">
-  <a class="subnav-item {% if active_tab == 'details' %}active{% else %}inactive{% endif %}"
-    href="{{ debug_route }}/{{ record.request_id }}">
+  <a class="subnav-item"
+    :class="tab === 'details' ? 'active' : 'inactive'"
+    href="{{ debug_route }}/{{ record.request_id }}"
+    @click.prevent="tab = 'details'">
     <span>Details</span>
-    {% if active_tab == 'details' %}<div class="subnav-underline"></div>{% endif %}
+    <div class="subnav-underline" x-show="tab === 'details'"></div>
   </a>
-  <a class="subnav-item {% if active_tab == 'sql' %}active{% else %}inactive{% endif %}"
-    href="{{ debug_route }}/{{ record.request_id }}?tab=sql">
+  <a class="subnav-item"
+    :class="tab === 'sql' ? 'active' : 'inactive'"
+    href="{{ debug_route }}/{{ record.request_id }}?tab=sql"
+    @click.prevent="tab = 'sql'">
     <span>SQL</span>
-    {% if active_tab == 'sql' %}<div class="subnav-underline"></div>{% endif %}
+    <div class="subnav-underline" x-show="tab === 'sql'"></div>
   </a>
-  <a class="subnav-item {% if active_tab == 'traceback' %}active{% else %}inactive{% endif %}"
-    href="{{ debug_route }}/{{ record.request_id }}?tab=traceback">
+  <a class="subnav-item"
+    :class="tab === 'traceback' ? 'active' : 'inactive'"
+    href="{{ debug_route }}/{{ record.request_id }}?tab=traceback"
+    @click.prevent="tab = 'traceback'">
     <span>Traceback</span>
-    {% if active_tab == 'traceback' %}<div class="subnav-underline"></div>{% endif %}
+    <div class="subnav-underline" x-show="tab === 'traceback'"></div>
   </a>
 </div>
 {% endblock %}
 
 {% block content %}
-{% if active_tab == 'sql' %}
+
+{# ── Details tab ── #}
+<div class="tab-panel" x-show="tab === 'details'">
+
+  {# Stats cards #}
+  <div class="cards-row">
+    <div class="card">
+      <span class="card-label">STATUS</span>
+      <div>
+        <span class="card-badge {{ record.status_code | status_class }}" style="margin-top:4px">
+          <span>{{ record.status_code }} {{ record.status_code | status_text }}</span>
+        </span>
+      </div>
+    </div>
+    <div class="card">
+      <span class="card-label">DURATION</span>
+      <span class="card-value {{ record.duration_ms | duration_class }}">{{ "%.0f"|format(record.duration_ms) }} ms</span>
+    </div>
+    <div class="card">
+      <span class="card-label">SQL QUERIES</span>
+      <span class="card-value {{ (record.queries | length) | queries_color }}">{{ record.queries | length }}
+        queries</span>
+    </div>
+    <div class="card">
+      <span class="card-label">SQL TIME</span>
+      <span class="card-value {{ sql_total_ms | duration_class }}">{{ "%.0f"|format(sql_total_ms) }} ms</span>
+    </div>
+  </div>
+
+  {# Request + Response panels #}
+  <div class="panels-row">
+    {# Request panel #}
+    <div class="panel-card">
+      <div class="panel-hd">
+        <span class="panel-hd-title">Request</span>
+        <span
+          class="method m-{{ record.method if record.method in ('GET','POST','PUT','PATCH','DELETE','HEAD') else 'OTHER' }}">
+          {{ record.method }}
+        </span>
+      </div>
+      <div class="panel-bd">
+        <div class="field">
+          <span class="field-lbl">Path</span>
+          <span class="field-val">{{ record.path }}{% if record.query_string %}?{{ record.query_string }}{% endif
+            %}</span>
+        </div>
+        <div class="psep"></div>
+        <div class="field">
+          <span class="field-lbl">Headers</span>
+          <div class="code-block">
+            {% for k, v in record.request_headers.items() %}
+            <span class="code-line">{{ k }}: {{ v }}</span>
+            {% else %}
+            <span class="code-line" style="color:#4B5563">—</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="psep"></div>
+        <div class="field">
+          <span class="field-lbl">Client</span>
+          <span class="field-val">{{ record.client_host }}</span>
+        </div>
+        <div class="psep"></div>
+        <div class="field">
+          <span class="field-lbl">Timestamp</span>
+          <span class="field-val">{{ record.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") }}</span>
+        </div>
+        <div class="psep"></div>
+        <div class="field">
+          <span class="field-lbl">Request ID</span>
+          <span class="field-val" style="font-family:monospace;font-size:12px">{{ record.request_id }}</span>
+        </div>
+      </div>
+    </div>
+
+    {# Response panel #}
+    <div class="panel-card">
+      <div class="panel-hd">
+        <span class="panel-hd-title">Response</span>
+        <span class="status {{ record.status_code | status_class }}">{{ record.status_code }}</span>
+      </div>
+      <div class="panel-bd">
+        <div class="field">
+          <span class="field-lbl">Response Time</span>
+          <span class="field-val {{ record.duration_ms | duration_class }}">{{ "%.2f"|format(record.duration_ms) }}
+            ms</span>
+        </div>
+        <div class="psep"></div>
+        <div class="field">
+          <span class="field-lbl">Headers</span>
+          <div class="code-block">
+            {% for k, v in record.response_headers.items() %}
+            <span class="code-line">{{ k }}: {{ v }}</span>
+            {% else %}
+            <span class="code-line" style="color:#4B5563">—</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="psep"></div>
+        <div class="field">
+          <span class="field-lbl">Body</span>
+          {% if record.response_body %}
+          <div class="code-block" style="max-height:300px; overflow-y:auto;">
+            <span class="code-line">{{ record.response_body }}</span>
+          </div>
+          {% else %}
+          <span class="field-val" style="color:#4B5563">— (binary or not captured)</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {# ── SQL tab ── #}
-{% include "partials/detail_sql.html" %}
+<div class="tab-panel" x-show="tab === 'sql'" x-cloak>
+  {% include "partials/detail_sql.html" %}
+</div>
 
-{% elif active_tab == 'traceback' %}
 {# ── Traceback tab ── #}
-{% include "partials/detail_traceback.html" %}
-
-{% else %}
-{# ── Details tab (default) ── #}
-
-{# Stats cards #}
-<div class="cards-row">
-  <div class="card">
-    <span class="card-label">STATUS</span>
-    <div>
-      <span class="card-badge {{ record.status_code | status_class }}" style="margin-top:4px">
-        <span>{{ record.status_code }} {{ record.status_code | status_text }}</span>
-      </span>
-    </div>
-  </div>
-  <div class="card">
-    <span class="card-label">DURATION</span>
-    <span class="card-value {{ record.duration_ms | duration_class }}">{{ "%.0f"|format(record.duration_ms) }} ms</span>
-  </div>
-  <div class="card">
-    <span class="card-label">SQL QUERIES</span>
-    <span class="card-value {{ (record.queries | length) | queries_color }}">{{ record.queries | length }}
-      queries</span>
-  </div>
-  <div class="card">
-    <span class="card-label">SQL TIME</span>
-    <span class="card-value {{ sql_total_ms | duration_class }}">{{ "%.0f"|format(sql_total_ms) }} ms</span>
-  </div>
+<div class="tab-panel" x-show="tab === 'traceback'" x-cloak>
+  {% include "partials/detail_traceback.html" %}
 </div>
 
-{# Request + Response panels #}
-<div class="panels-row">
-  {# Request panel #}
-  <div class="panel-card">
-    <div class="panel-hd">
-      <span class="panel-hd-title">Request</span>
-      <span
-        class="method m-{{ record.method if record.method in ('GET','POST','PUT','PATCH','DELETE','HEAD') else 'OTHER' }}">
-        {{ record.method }}
-      </span>
-    </div>
-    <div class="panel-bd">
-      <div class="field">
-        <span class="field-lbl">Path</span>
-        <span class="field-val">{{ record.path }}{% if record.query_string %}?{{ record.query_string }}{% endif
-          %}</span>
-      </div>
-      <div class="psep"></div>
-      <div class="field">
-        <span class="field-lbl">Headers</span>
-        <div class="code-block">
-          {% for k, v in record.request_headers.items() %}
-          <span class="code-line">{{ k }}: {{ v }}</span>
-          {% else %}
-          <span class="code-line" style="color:#4B5563">—</span>
-          {% endfor %}
-        </div>
-      </div>
-      <div class="psep"></div>
-      <div class="field">
-        <span class="field-lbl">Client</span>
-        <span class="field-val">{{ record.client_host }}</span>
-      </div>
-      <div class="psep"></div>
-      <div class="field">
-        <span class="field-lbl">Timestamp</span>
-        <span class="field-val">{{ record.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC") }}</span>
-      </div>
-      <div class="psep"></div>
-      <div class="field">
-        <span class="field-lbl">Request ID</span>
-        <span class="field-val" style="font-family:monospace;font-size:12px">{{ record.request_id }}</span>
-      </div>
-    </div>
-  </div>
-
-  {# Response panel #}
-  <div class="panel-card">
-    <div class="panel-hd">
-      <span class="panel-hd-title">Response</span>
-      <span class="status {{ record.status_code | status_class }}">{{ record.status_code }}</span>
-    </div>
-    <div class="panel-bd">
-      <div class="field">
-        <span class="field-lbl">Response Time</span>
-        <span class="field-val {{ record.duration_ms | duration_class }}">{{ "%.2f"|format(record.duration_ms) }}
-          ms</span>
-      </div>
-      <div class="psep"></div>
-      <div class="field">
-        <span class="field-lbl">Headers</span>
-        <div class="code-block">
-          {% for k, v in record.response_headers.items() %}
-          <span class="code-line">{{ k }}: {{ v }}</span>
-          {% else %}
-          <span class="code-line" style="color:#4B5563">—</span>
-          {% endfor %}
-        </div>
-      </div>
-      <div class="psep"></div>
-      <div class="field">
-        <span class="field-lbl">Body</span>
-        {% if record.response_body %}
-        <div class="code-block" style="max-height:300px; overflow-y:auto;">
-          <span class="code-line">{{ record.response_body }}</span>
-        </div>
-        {% else %}
-        <span class="field-val" style="color:#4B5563">— (binary or not captured)</span>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-{% endif %}
 {% endblock %}

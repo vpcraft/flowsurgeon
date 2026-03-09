@@ -318,22 +318,8 @@ def render_history_page(
     """Return the full HTML home page (Requests grid view)."""
     tmpl = _env.get_template("home.html")
 
-    if view == "profiling":
-        return tmpl.render(
-            records=[],
-            total_records=0,
-            debug_route=debug_route,
-            active_view="profiling",
-            q="",
-            order=order,
-            show=show,
-            page=1,
-            total_pages=1,
-            page_start=0,
-            page_end=0,
-        )
-
-    # Latency & Queries view: filter and sort recent requests
+    # Always compute latency data so both tab panels have records available
+    # (the client-side Alpine tab switch must not show an empty grid when switching)
     filtered = _filter_records(records, q=q)
 
     if order == "duration":
@@ -353,7 +339,7 @@ def render_history_page(
         records=page_items,
         total_records=total,
         debug_route=debug_route,
-        active_view="latency",
+        active_view=view,  # "latency" or "profiling" — Alpine initializes tab from this
         q=q,
         order=order,
         show=show,
