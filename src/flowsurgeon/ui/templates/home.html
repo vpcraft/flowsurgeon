@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}FlowSurgeon — {% if active_view == "requests" %}Recent Requests{% else %}API Endpoints{% endif %}{% endblock %}
+{% block title %}FlowSurgeon — {% if active_view == "requests" %}Recent Requests{% else %}API Endpoints{% endif %}{%
+endblock %}
 
 {% block topbar %}
 <nav class="topbar">
   <span class="logo">FlowSurgeon</span>
-  <a class="nav-item {% if active_view != 'requests' %}active{% else %}inactive{% endif %}"
-     href="{{ debug_route }}">
+  <a class="nav-item {% if active_view != 'requests' %}active{% else %}inactive{% endif %}" href="{{ debug_route }}">
     <span>APIs</span>
     {% if active_view != 'requests' %}<div class="nav-underline"></div>{% endif %}
   </a>
   <a class="nav-item {% if active_view == 'requests' %}active{% else %}inactive{% endif %}"
-     href="{{ debug_route }}?view=requests">
+    href="{{ debug_route }}?view=requests">
     <span>Recent Requests</span>
     {% if active_view == 'requests' %}<div class="nav-underline"></div>{% endif %}
   </a>
@@ -35,7 +35,8 @@
   <div style="display:flex; align-items:center; gap:12px;">
     <a href="{{ debug_route }}" style="font-size:13px; color:#6B7280;">← APIs</a>
     <h1 class="section-title">
-      {% if method_filter %}<span class="method {{ method_filter | method_class }}" style="font-size:16px; margin-right:8px;">{{ method_filter }}</span>{% endif %}{{ path_filter }}
+      {% if method_filter %}<span class="method {{ method_filter | method_class }}"
+        style="font-size:16px; margin-right:8px;">{{ method_filter }}</span>{% endif %}{{ path_filter }}
     </h1>
   </div>
   {% else %}
@@ -51,13 +52,13 @@
   <select name="method" class="filter-select">
     <option value="">All Methods</option>
     {% for m in ["GET","POST","PUT","PATCH","DELETE"] %}
-    <option value="{{ m }}" {% if method_filter == m %}selected{% endif %}>{{ m }}</option>
+    <option value="{{ m }}" {% if method_filter==m %}selected{% endif %}>{{ m }}</option>
     {% endfor %}
   </select>
   <select name="status" class="filter-select">
     <option value="">All Status</option>
     {% for s in ["2xx","3xx","4xx","5xx"] %}
-    <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+    <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>
     {% endfor %}
   </select>
   <button type="submit" class="filter-btn">Filter</button>
@@ -78,26 +79,27 @@
   </div>
   <div class="tbl-body">
     {% if records %}
-      {% for r in records %}
-      <a class="tr td-link" href="{{ debug_route }}/{{ r.request_id }}"
-         style="text-decoration:none; display:flex; align-items:center;">
-        <span class="td td-dim w-160">{{ r.timestamp.strftime("%m-%d %H:%M:%S") }}</span>
-        <span class="td w-fill">{{ r.path }}{% if r.query_string %}?{{ r.query_string }}{% endif %}</span>
-        <span class="td w-90">
-          <span class="method {{ r.method | method_class }}">{{ r.method }}</span>
-        </span>
-        <span class="td w-110 {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }} ms</span>
-        <span class="td w-110 {{ (r.queries|length) | queries_color }}">
-          {{ r.queries | length if r.queries else '—' }}{% if r.queries %} quer.{% endif %}
-        </span>
-        <span class="td w-80">
-          <span class="status {{ r.status_code | status_class }}">{{ r.status_code }}</span>
-        </span>
-      </a>
-      {% if not loop.last %}<div class="sep"></div>{% endif %}
-      {% endfor %}
+    {% for r in records %}
+    <a class="tr td-link" href="{{ debug_route }}/{{ r.request_id }}"
+      style="text-decoration:none; display:flex; align-items:center;">
+      <span class="td td-dim w-160">{{ r.timestamp.strftime("%m-%d %H:%M:%S") }}</span>
+      <span class="td w-fill">{{ r.path }}{% if r.query_string %}?{{ r.query_string }}{% endif %}</span>
+      <span class="td w-90">
+        <span class="method {{ r.method | method_class }}">{{ r.method }}</span>
+      </span>
+      <span class="td w-110 {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }} ms</span>
+      <span class="td w-110 {{ (r.queries|length) | queries_color }}">
+        {{ r.queries | length if r.queries else '—' }}{% if r.queries %} quer.{% endif %}
+      </span>
+      <span class="td w-80">
+        <span class="status {{ r.status_code | status_class }}">{{ r.status_code }}</span>
+      </span>
+    </a>
+    {% if not loop.last %}<div class="sep"></div>{% endif %}
+    {% endfor %}
     {% else %}
-      <div class="empty">No requests recorded{% if q or status_filter or method_filter %} matching filters{% endif %}.</div>
+    <div class="empty">No requests recorded{% if q or status_filter or method_filter %} matching filters{% endif %}.
+    </div>
     {% endif %}
   </div>
 </div>
@@ -130,14 +132,14 @@
   <select name="amethod" class="filter-select">
     <option value="">All Methods</option>
     {% for m in ["GET","POST","PUT","PATCH","DELETE"] %}
-    <option value="{{ m }}" {% if apis_method == m %}selected{% endif %}>{{ m }}</option>
+    <option value="{{ m }}" {% if apis_method==m %}selected{% endif %}>{{ m }}</option>
     {% endfor %}
   </select>
   <select name="sort" class="filter-select">
-    <option value="duration" {% if sort == "duration" %}selected{% endif %}>Sort: Duration</option>
-    <option value="requests" {% if sort == "requests" %}selected{% endif %}>Sort: Requests</option>
-    <option value="path"     {% if sort == "path"     %}selected{% endif %}>Sort: Path</option>
-    <option value="method"   {% if sort == "method"   %}selected{% endif %}>Sort: Method</option>
+    <option value="duration" {% if sort=="duration" %}selected{% endif %}>Sort: Duration</option>
+    <option value="requests" {% if sort=="requests" %}selected{% endif %}>Sort: Requests</option>
+    <option value="path" {% if sort=="path" %}selected{% endif %}>Sort: Path</option>
+    <option value="method" {% if sort=="method" %}selected{% endif %}>Sort: Method</option>
   </select>
   <button type="submit" class="filter-btn">Apply</button>
   {% if apis_method or (sort and sort != "duration") %}
@@ -158,41 +160,42 @@
   </div>
   <div class="tbl-body">
     {% if endpoint_summaries %}
-      {% for ep in endpoint_summaries %}
-      <a class="tr td-link"
-         href="{{ debug_route }}?view=requests&path={{ ep.path }}&method={{ ep.method }}"
-         style="text-decoration:none; display:flex; align-items:center;">
-        <span class="td w-fill">{{ ep.path }}</span>
-        <span class="td w-90">
-          <span class="method {{ ep.method | method_class }}">{{ ep.method }}</span>
-        </span>
-        <span class="td w-110 {% if ep.has_data %}{{ ep.latest_duration_ms | duration_class }}{% else %}td-dim{% endif %}">
-          {% if ep.has_data %}{{ "%.0f"|format(ep.latest_duration_ms) }} ms{% else %}—{% endif %}
-        </span>
-        <span class="td w-80 {{ ep.latest_query_count | queries_color }}">
-          {{ ep.latest_query_count if ep.latest_query_count else '—' }}
-        </span>
-        <span class="td w-100 {% if ep.latest_query_ms > 0 %}{{ ep.latest_query_ms | duration_class }}{% else %}td-dim{% endif %}">
-          {% if ep.latest_query_ms > 0 %}{{ "%.0f"|format(ep.latest_query_ms) }} ms{% else %}—{% endif %}
-        </span>
-        <span class="td w-100 td-dim">
-          {{ ep.count if ep.count else '—' }}{% if ep.count %} req{% if ep.count != 1 %}s{% endif %}{% endif %}
-        </span>
-        <span class="td w-160 td-dim">
-          {{ ep.last_request_time or '—' }}
-        </span>
-        <span class="td w-80">
-          {% if ep.has_data %}
-          <span class="status {{ ep.latest_status | status_class }}">{{ ep.latest_status }}</span>
-          {% else %}
-          <span style="color:#4B5563; font-size:12px;">no traffic</span>
-          {% endif %}
-        </span>
-      </a>
-      {% if not loop.last %}<div class="sep"></div>{% endif %}
-      {% endfor %}
+    {% for ep in endpoint_summaries %}
+    <a class="tr td-link" href="{{ debug_route }}?view=requests&path={{ ep.path }}&method={{ ep.method }}"
+      style="text-decoration:none; display:flex; align-items:center;">
+      <span class="td w-fill">{{ ep.path }}</span>
+      <span class="td w-90">
+        <span class="method {{ ep.method | method_class }}">{{ ep.method }}</span>
+      </span>
+      <span
+        class="td w-110 {% if ep.has_data %}{{ ep.latest_duration_ms | duration_class }}{% else %}td-dim{% endif %}">
+        {% if ep.has_data %}{{ "%.0f"|format(ep.latest_duration_ms) }} ms{% else %}—{% endif %}
+      </span>
+      <span class="td w-80 {{ ep.latest_query_count | queries_color }}">
+        {{ ep.latest_query_count if ep.latest_query_count else '—' }}
+      </span>
+      <span
+        class="td w-100 {% if ep.latest_query_ms > 0 %}{{ ep.latest_query_ms | duration_class }}{% else %}td-dim{% endif %}">
+        {% if ep.latest_query_ms > 0 %}{{ "%.0f"|format(ep.latest_query_ms) }} ms{% else %}—{% endif %}
+      </span>
+      <span class="td w-100 td-dim">
+        {{ ep.count if ep.count else '—' }}{% if ep.count %} req{% if ep.count != 1 %}s{% endif %}{% endif %}
+      </span>
+      <span class="td w-160 td-dim">
+        {{ ep.last_request_time or '—' }}
+      </span>
+      <span class="td w-80">
+        {% if ep.has_data %}
+        <span class="status {{ ep.latest_status | status_class }}">{{ ep.latest_status }}</span>
+        {% else %}
+        <span style="color:#4B5563; font-size:12px;">no traffic</span>
+        {% endif %}
+      </span>
+    </a>
+    {% if not loop.last %}<div class="sep"></div>{% endif %}
+    {% endfor %}
     {% else %}
-      <div class="empty">No endpoints registered yet.</div>
+    <div class="empty">No endpoints registered yet.</div>
     {% endif %}
   </div>
 </div>

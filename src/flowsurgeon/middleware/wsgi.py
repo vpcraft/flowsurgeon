@@ -99,13 +99,13 @@ class FlowSurgeonWSGI:
         # Static assets: /{debug_route}/_static/<filename>
         static_prefix = debug_route + "/_static/"
         if path.startswith(static_prefix):
-            filename = path[len(static_prefix):]
+            filename = path[len(static_prefix) :]
             return self._serve_static(filename, start_response)
 
         if path == debug_route or path == debug_route + "/":
             return self._serve_history(environ, start_response, qs)
         if path.startswith(debug_route + "/"):
-            request_id = path[len(debug_route) + 1:]
+            request_id = path[len(debug_route) + 1 :]
             return self._serve_detail(request_id, environ, start_response, qs)
 
         return self._profile_request(environ, start_response, client_host, path)
@@ -114,13 +114,14 @@ class FlowSurgeonWSGI:
     # Debug UI routes
     # ------------------------------------------------------------------
 
-    def _serve_static(
-        self, filename: str, start_response: StartResponse
-    ) -> Iterable[bytes]:
+    def _serve_static(self, filename: str, start_response: StartResponse) -> Iterable[bytes]:
         # Guard against path traversal (e.g. /_static/../panel.py)
         if not filename or "/" in filename or "\\" in filename or ".." in filename:
             body = b"Not found"
-            start_response("404 Not Found", [("Content-Type", "text/plain"), ("Content-Length", str(len(body)))])
+            start_response(
+                "404 Not Found",
+                [("Content-Type", "text/plain"), ("Content-Length", str(len(body)))],
+            )
             return [body]
         ext = os.path.splitext(filename)[1].lower()
         mime = _MIME_TYPES.get(ext, "application/octet-stream")
@@ -128,7 +129,10 @@ class FlowSurgeonWSGI:
             data = _load_asset_bytes(filename)
         except Exception:
             body = b"Not found"
-            start_response("404 Not Found", [("Content-Type", "text/plain"), ("Content-Length", str(len(body)))])
+            start_response(
+                "404 Not Found",
+                [("Content-Type", "text/plain"), ("Content-Length", str(len(body)))],
+            )
             return [body]
         start_response("200 OK", [("Content-Type", mime), ("Content-Length", str(len(data)))])
         return [data]
@@ -230,7 +234,11 @@ class FlowSurgeonWSGI:
             # Do NOT call the real start_response yet — we may need to
             # modify Content-Length after panel injection.
 
-        queries, token = begin_query_collection() if self._trackers and self._config.track_queries else ([], None)
+        queries, token = (
+            begin_query_collection()
+            if self._trackers and self._config.track_queries
+            else ([], None)
+        )
         try:
             t0 = time.perf_counter()
             chunks = list(self._app(environ, capturing_start_response))

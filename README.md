@@ -1,12 +1,12 @@
 <div align="center">
-  <img src="src/flowsurgeon/ui/assets/Icon.png" alt="FlowSurgeon" width="96">
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4ulii4nulch2u8qopdec.png" alt="FlowSurgeon" width="96">
   <h1>FlowSurgeon</h1>
   <p>Framework-agnostic profiling middleware for Python — drop-in debug UI for Flask and FastAPI.</p>
 
   [![PyPI version](https://img.shields.io/pypi/v/flowsurgeon.svg)](https://pypi.org/project/flowsurgeon/)
   [![Python 3.12+](https://img.shields.io/pypi/pyversions/flowsurgeon.svg)](https://pypi.org/project/flowsurgeon/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-  [![Tests](https://img.shields.io/github/actions/workflow/status/Samandar-Komilov/flowsurgeon/ci.yml?label=tests)](https://github.com/Samandar-Komilov/flowsurgeon/actions)
+  [![Tests](https://img.shields.io/github/actions/workflow/status/vpcraft/flowsurgeon/ci.yml?label=tests)](https://github.com/vpcraft/flowsurgeon/actions)
   [![PyPI downloads](https://img.shields.io/pypi/dm/flowsurgeon.svg)](https://pypi.org/project/flowsurgeon/)
 </div>
 
@@ -14,19 +14,17 @@
 
 FlowSurgeon wraps your existing WSGI or ASGI app with a single line. It injects a collapsible debug panel into every HTML response and stores a full request history — timing, headers, SQL queries, response bodies — in a local SQLite database, with a built-in dark-themed UI at `/flowsurgeon`.
 
+<div align="center">
+    <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ztt5hfvreqd7xff0jymz.png" alt="Home Screen">
+</div>
+
 ## Features
 
 - **Zero application changes** — wraps any WSGI or ASGI callable
 - **Auto-detect** WSGI vs ASGI via the `FlowSurgeon()` factory
 - **Inline debug panel** injected before `</body>` in every HTML response
 - **Built-in history UI** at `/flowsurgeon` — no extra server needed
-  - **API Endpoints view** — all registered routes (Swagger-style) with traffic metrics, last request time, sort and method filter
-  - **Recent Requests view** — filterable, searchable, paginated list with path, method, status, duration, SQL count
-  - **Request detail** — headers, response body, SQL queries with slow/duplicate badges, stack traces
 - **SQL query tracking** via SQLAlchemy and DB-API 2.0 (sqlite3, psycopg2, …)
-  - Per-query timing with configurable slow threshold
-  - Duplicate query detection (`dup` badge)
-  - Optional stack trace capture per query
 - **Route auto-discovery** from Flask (`url_map`) and FastAPI/Starlette (`app.routes`) — endpoints appear in the UI before any traffic
 - **Response body capture** — stores up to 128 KB for text/JSON/XML responses
 - **SQLite persistence** with auto-pruning (configurable max records)

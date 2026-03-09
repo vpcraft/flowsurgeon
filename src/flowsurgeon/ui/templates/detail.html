@@ -18,17 +18,17 @@
 {% block subnav %}
 <div class="subnav">
   <a class="subnav-item {% if active_tab == 'details' %}active{% else %}inactive{% endif %}"
-     href="{{ debug_route }}/{{ record.request_id }}">
+    href="{{ debug_route }}/{{ record.request_id }}">
     <span>Details</span>
     {% if active_tab == 'details' %}<div class="subnav-underline"></div>{% endif %}
   </a>
   <a class="subnav-item {% if active_tab == 'sql' %}active{% else %}inactive{% endif %}"
-     href="{{ debug_route }}/{{ record.request_id }}?tab=sql">
+    href="{{ debug_route }}/{{ record.request_id }}?tab=sql">
     <span>SQL</span>
     {% if active_tab == 'sql' %}<div class="subnav-underline"></div>{% endif %}
   </a>
   <a class="subnav-item {% if active_tab == 'traceback' %}active{% else %}inactive{% endif %}"
-     href="{{ debug_route }}/{{ record.request_id }}?tab=traceback">
+    href="{{ debug_route }}/{{ record.request_id }}?tab=traceback">
     <span>Traceback</span>
     {% if active_tab == 'traceback' %}<div class="subnav-underline"></div>{% endif %}
   </a>
@@ -63,7 +63,8 @@
   </div>
   <div class="card">
     <span class="card-label">SQL QUERIES</span>
-    <span class="card-value {{ (record.queries | length) | queries_color }}">{{ record.queries | length }} queries</span>
+    <span class="card-value {{ (record.queries | length) | queries_color }}">{{ record.queries | length }}
+      queries</span>
   </div>
   <div class="card">
     <span class="card-label">SQL TIME</span>
@@ -77,14 +78,16 @@
   <div class="panel-card">
     <div class="panel-hd">
       <span class="panel-hd-title">Request</span>
-      <span class="method m-{{ record.method if record.method in ('GET','POST','PUT','PATCH','DELETE','HEAD') else 'OTHER' }}">
+      <span
+        class="method m-{{ record.method if record.method in ('GET','POST','PUT','PATCH','DELETE','HEAD') else 'OTHER' }}">
         {{ record.method }}
       </span>
     </div>
     <div class="panel-bd">
       <div class="field">
         <span class="field-lbl">Path</span>
-        <span class="field-val">{{ record.path }}{% if record.query_string %}?{{ record.query_string }}{% endif %}</span>
+        <span class="field-val">{{ record.path }}{% if record.query_string %}?{{ record.query_string }}{% endif
+          %}</span>
       </div>
       <div class="psep"></div>
       <div class="field">
@@ -124,7 +127,8 @@
     <div class="panel-bd">
       <div class="field">
         <span class="field-lbl">Response Time</span>
-        <span class="field-val {{ record.duration_ms | duration_class }}">{{ "%.2f"|format(record.duration_ms) }} ms</span>
+        <span class="field-val {{ record.duration_ms | duration_class }}">{{ "%.2f"|format(record.duration_ms) }}
+          ms</span>
       </div>
       <div class="psep"></div>
       <div class="field">

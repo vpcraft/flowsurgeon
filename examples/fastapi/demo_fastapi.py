@@ -97,13 +97,12 @@ async def books():
 async def books_duplicates():
     """Runs the same query twice — panel shows 'dup' badge."""
     with Session(engine) as session:
-        first = session.execute(
-            text("SELECT id, title FROM books WHERE year < 2000")
-        ).fetchall()
-        _ = session.execute(
-            text("SELECT id, title FROM books WHERE year < 2000")
-        ).fetchall()
-    return {"books": [r._asdict() for r in first], "note": "same query ran twice — check /__flowsurgeon__/"}
+        first = session.execute(text("SELECT id, title FROM books WHERE year < 2000")).fetchall()
+        _ = session.execute(text("SELECT id, title FROM books WHERE year < 2000")).fetchall()
+    return {
+        "books": [r._asdict() for r in first],
+        "note": "same query ran twice — check /__flowsurgeon__/",
+    }
 
 
 @_inner.get("/books/slow")
@@ -113,7 +112,11 @@ async def books_slow():
         rows = session.execute(text("SELECT id, title FROM books")).fetchall()
         await asyncio.sleep(0.08)
         total = session.execute(text("SELECT COUNT(*) FROM books")).scalar()
-    return {"books": [r._asdict() for r in rows], "total": total, "note": "check /__flowsurgeon__/ for slow badge"}
+    return {
+        "books": [r._asdict() for r in rows],
+        "total": total,
+        "note": "check /__flowsurgeon__/ for slow badge",
+    }
 
 
 @_inner.get("/books/{book_id}")

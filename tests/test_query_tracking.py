@@ -12,7 +12,11 @@ from flowsurgeon import Config, FlowSurgeonASGI, FlowSurgeonWSGI
 from flowsurgeon.core.records import QueryRecord
 from flowsurgeon.storage.async_sqlite import AsyncSQLiteBackend
 from flowsurgeon.storage.sqlite import SQLiteBackend
-from flowsurgeon.trackers.context import begin_query_collection, end_query_collection, get_current_queries
+from flowsurgeon.trackers.context import (
+    begin_query_collection,
+    end_query_collection,
+    get_current_queries,
+)
 from flowsurgeon.trackers.dbapi import DBAPITracker
 
 
@@ -39,36 +43,54 @@ def _make_wsgi_environ(path: str = "/", remote_addr: str = "127.0.0.1") -> dict:
 
 def _wsgi_json_app(environ, start_response):
     body = b'{"ok": true}'
-    start_response("200 OK", [("Content-Type", "application/json"), ("Content-Length", str(len(body)))])
+    start_response(
+        "200 OK", [("Content-Type", "application/json"), ("Content-Length", str(len(body)))]
+    )
     return [body]
 
 
 def _call_wsgi(app, environ):
     responses = []
+
     def sr(status, headers):
         responses.append((status, headers))
+
     chunks = list(app(environ, sr))
     return responses[0][0], b"".join(chunks)
 
 
 async def _asgi_json_app(scope, receive, send):
     body = b'{"ok": true}'
-    await send({
-        "type": "http.response.start",
-        "status": 200,
-        "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())],
-    })
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"content-length", str(len(body)).encode()),
+            ],
+        }
+    )
     await send({"type": "http.response.body", "body": body})
 
 
 async def _call_asgi(app, path: str = "/", client: tuple = ("127.0.0.1", 9000)):
     messages = []
+
     async def receive():
         return {"type": "http.request", "body": b"", "more_body": False}
+
     async def send(msg):
         messages.append(msg)
-    scope = {"type": "http", "method": "GET", "path": path,
-             "query_string": b"", "headers": [], "client": client}
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": path,
+        "query_string": b"",
+        "headers": [],
+        "client": client,
+    }
     await app(scope, receive, send)
     start = next(m for m in messages if m["type"] == "http.response.start")
     body = b"".join(m.get("body", b"") for m in messages if m["type"] == "http.response.body")
@@ -191,7 +213,9 @@ class TestWSGIWithTracker:
 
         cfg = _enabled_cfg(tmp_path)
         storage = SQLiteBackend(cfg.db_path)
-        middleware = FlowSurgeonWSGI(app_with_query, config=cfg, storage=storage, trackers=[tracker])
+        middleware = FlowSurgeonWSGI(
+            app_with_query, config=cfg, storage=storage, trackers=[tracker]
+        )
 
         _call_wsgi(middleware, _make_wsgi_environ())
         record = storage.list_recent()[0]
@@ -231,7 +255,9 @@ class TestWSGIWithTracker:
 
         cfg = _enabled_cfg(tmp_path)
         storage = SQLiteBackend(cfg.db_path)
-        middleware = FlowSurgeonWSGI(app_with_queries, config=cfg, storage=storage, trackers=[tracker])
+        middleware = FlowSurgeonWSGI(
+            app_with_queries, config=cfg, storage=storage, trackers=[tracker]
+        )
 
         _call_wsgi(middleware, _make_wsgi_environ())
         record = storage.list_recent()[0]
@@ -249,11 +275,15 @@ class TestWSGIWithTracker:
             return _wsgi_json_app(environ, start_response)
 
         cfg = Config(
-            enabled=True, db_path=str(tmp_path / "t.db"),
-            allowed_hosts=["127.0.0.1"], track_queries=False,
+            enabled=True,
+            db_path=str(tmp_path / "t.db"),
+            allowed_hosts=["127.0.0.1"],
+            track_queries=False,
         )
         storage = SQLiteBackend(cfg.db_path)
-        middleware = FlowSurgeonWSGI(app_with_query, config=cfg, storage=storage, trackers=[tracker])
+        middleware = FlowSurgeonWSGI(
+            app_with_query, config=cfg, storage=storage, trackers=[tracker]
+        )
 
         _call_wsgi(middleware, _make_wsgi_environ())
         assert storage.list_recent()[0].queries == []
@@ -276,7 +306,9 @@ class TestASGIWithTracker:
 
         cfg = _enabled_cfg(tmp_path)
         storage = AsyncSQLiteBackend(cfg.db_path)
-        middleware = FlowSurgeonASGI(app_with_query, config=cfg, storage=storage, trackers=[tracker])
+        middleware = FlowSurgeonASGI(
+            app_with_query, config=cfg, storage=storage, trackers=[tracker]
+        )
 
         await _call_asgi(middleware)
         await storage._queue.join()
@@ -320,7 +352,6 @@ class TestASGIWithTracker:
 def sa_engine(tmp_path):
     pytest.importorskip("sqlalchemy")
     from sqlalchemy import create_engine, text
-    from flowsurgeon.trackers.sqlalchemy import SQLAlchemyTracker
 
     engine = create_engine(f"sqlite:///{tmp_path}/sa.db")
     with engine.connect() as conn:

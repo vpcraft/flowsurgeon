@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from flowsurgeon.core.records import QueryRecord
-
 
 class QueryTracker(ABC):
     """Abstract base class for database query trackers.

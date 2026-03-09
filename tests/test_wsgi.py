@@ -148,9 +148,7 @@ class TestDebugRoutes:
         app = FlowSurgeonWSGI(_json_app, config=cfg, storage=storage)
         _call_app(app, _make_environ(path="/my-endpoint"))
         record = storage.list_recent()[0]
-        status, _, body = _call_app(
-            app, _make_environ(path=f"/flowsurgeon/{record.request_id}")
-        )
+        status, _, body = _call_app(app, _make_environ(path=f"/flowsurgeon/{record.request_id}"))
         assert status == "200 OK"
         assert record.request_id.encode() in body
 

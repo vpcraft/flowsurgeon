@@ -74,12 +74,24 @@ class SQLAlchemyTracker(QueryTracker):
     # ------------------------------------------------------------------
 
     def _before_execute(
-        self, conn: Any, cursor: Any, statement: str, parameters: Any, context: Any, executemany: bool
+        self,
+        conn: Any,
+        cursor: Any,
+        statement: str,
+        parameters: Any,
+        context: Any,
+        executemany: bool,
     ) -> None:
         self._t0.value = time.perf_counter()
 
     def _after_execute(
-        self, conn: Any, cursor: Any, statement: str, parameters: Any, context: Any, executemany: bool
+        self,
+        conn: Any,
+        cursor: Any,
+        statement: str,
+        parameters: Any,
+        context: Any,
+        executemany: bool,
     ) -> None:
         t0 = getattr(self._t0, "value", None)
         duration_ms = (time.perf_counter() - t0) * 1000 if t0 is not None else 0.0

@@ -103,7 +103,7 @@ class FlowSurgeonASGI:
         # Static assets: /{debug_route}/_static/<filename>
         static_prefix = debug_route + "/_static/"
         if path.startswith(static_prefix):
-            filename = path[len(static_prefix):]
+            filename = path[len(static_prefix) :]
             await self._serve_static(filename, send)
             return
 
@@ -112,7 +112,7 @@ class FlowSurgeonASGI:
             return
 
         if path.startswith(debug_route + "/"):
-            request_id = path[len(debug_route) + 1:]
+            request_id = path[len(debug_route) + 1 :]
             await self._serve_detail(request_id, send, qs)
             return
 
@@ -146,10 +146,16 @@ class FlowSurgeonASGI:
         # Guard against path traversal (e.g. /_static/../panel.py)
         if not filename or "/" in filename or "\\" in filename or ".." in filename:
             body = b"Not found"
-            await send({
-                "type": "http.response.start", "status": 404,
-                "headers": [(b"content-type", b"text/plain"), (b"content-length", str(len(body)).encode())],
-            })
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 404,
+                    "headers": [
+                        (b"content-type", b"text/plain"),
+                        (b"content-length", str(len(body)).encode()),
+                    ],
+                }
+            )
             await send({"type": "http.response.body", "body": body})
             return
         ext = os.path.splitext(filename)[1].lower()
@@ -158,16 +164,28 @@ class FlowSurgeonASGI:
             data = _load_asset_bytes(filename)
         except Exception:
             body = b"Not found"
-            await send({
-                "type": "http.response.start", "status": 404,
-                "headers": [(b"content-type", b"text/plain"), (b"content-length", str(len(body)).encode())],
-            })
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 404,
+                    "headers": [
+                        (b"content-type", b"text/plain"),
+                        (b"content-length", str(len(body)).encode()),
+                    ],
+                }
+            )
             await send({"type": "http.response.body", "body": body})
             return
-        await send({
-            "type": "http.response.start", "status": 200,
-            "headers": [(b"content-type", mime.encode()), (b"content-length", str(len(data)).encode())],
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", mime.encode()),
+                    (b"content-length", str(len(data)).encode()),
+                ],
+            }
+        )
         await send({"type": "http.response.body", "body": data})
 
     async def _serve_history(self, send: Send, query_string: str = "") -> None:
@@ -194,15 +212,17 @@ class FlowSurgeonASGI:
             app_routes=self._app_routes,
             page=page,
         ).encode()
-        await send({
-            "type": "http.response.start",
-            "status": 200,
-            "headers": [
-                (b"content-type", b"text/html; charset=utf-8"),
-                (b"content-length", str(len(body)).encode()),
-                (b"cache-control", b"no-store"),
-            ],
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", b"text/html; charset=utf-8"),
+                    (b"content-length", str(len(body)).encode()),
+                    (b"cache-control", b"no-store"),
+                ],
+            }
+        )
         await send({"type": "http.response.body", "body": body})
 
     async def _serve_detail(self, request_id: str, send: Send, query_string: str = "") -> None:
@@ -210,14 +230,16 @@ class FlowSurgeonASGI:
         record = await self._storage.get(request_id)
         if record is None:
             body = b"<h1>Not found</h1>"
-            await send({
-                "type": "http.response.start",
-                "status": 404,
-                "headers": [
-                    (b"content-type", b"text/html; charset=utf-8"),
-                    (b"content-length", str(len(body)).encode()),
-                ],
-            })
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 404,
+                    "headers": [
+                        (b"content-type", b"text/html; charset=utf-8"),
+                        (b"content-length", str(len(body)).encode()),
+                    ],
+                }
+            )
             await send({"type": "http.response.body", "body": body})
             return
         body = render_detail_page(
@@ -226,15 +248,17 @@ class FlowSurgeonASGI:
             tab=tab,
             slow_threshold=self._config.slow_query_threshold_ms,
         ).encode()
-        await send({
-            "type": "http.response.start",
-            "status": 200,
-            "headers": [
-                (b"content-type", b"text/html; charset=utf-8"),
-                (b"content-length", str(len(body)).encode()),
-                (b"cache-control", b"no-store"),
-            ],
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (b"content-type", b"text/html; charset=utf-8"),
+                    (b"content-length", str(len(body)).encode()),
+                    (b"cache-control", b"no-store"),
+                ],
+            }
+        )
         await send({"type": "http.response.body", "body": body})
 
     # ------------------------------------------------------------------
@@ -327,11 +351,13 @@ class FlowSurgeonASGI:
         updated_headers = [(k, v) for k, v in resp_raw_headers if k.lower() != b"content-length"]
         updated_headers.append((b"content-length", str(len(body)).encode()))
 
-        await send({
-            "type": "http.response.start",
-            "status": status_code,
-            "headers": updated_headers,
-        })
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status_code,
+                "headers": updated_headers,
+            }
+        )
         await send({"type": "http.response.body", "body": body})
 
     # ------------------------------------------------------------------

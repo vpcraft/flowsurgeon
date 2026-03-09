@@ -98,7 +98,9 @@ def books_slow():
     time.sleep(0.08)
     cur.execute("SELECT COUNT(*) AS total FROM books")
     total = cur.fetchone()["total"]
-    return jsonify({"books": rows, "total": total, "note": "check /__flowsurgeon__/ for slow badge"})
+    return jsonify(
+        {"books": rows, "total": total, "note": "check /__flowsurgeon__/ for slow badge"}
+    )
 
 
 @app.get("/books/<int:book_id>")
