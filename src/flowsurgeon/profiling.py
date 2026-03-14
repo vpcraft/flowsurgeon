@@ -14,10 +14,13 @@ from __future__ import annotations
 
 import cProfile
 import io
+import logging
 import os
 import pstats
 import sys
 from typing import TYPE_CHECKING
+
+_log = logging.getLogger(__name__)
 
 from flowsurgeon.core.records import ProfileStat
 
@@ -89,6 +92,7 @@ def _parse_profile(prof: cProfile.Profile, config: "Config") -> list[ProfileStat
     try:
         ps = pstats.Stats(prof, stream=stream)
     except Exception:
+        _log.exception("FlowSurgeon: failed to parse cProfile stats")
         return []
 
     for (filename, lineno, func_name), (

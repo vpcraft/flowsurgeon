@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import importlib.resources
+import logging
 from collections import Counter, defaultdict
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -137,6 +140,7 @@ def discover_routes(app: Any) -> list[tuple[str, str]]:
                 for m in sorted(methods):
                     if m.upper() not in ("HEAD", "OPTIONS"):
                         result.append((m.upper(), path))
+        _log.debug("FlowSurgeon: discovered %d routes via app.routes", len(result))
         return result
 
     # Flask app passed directly: app.url_map
@@ -149,7 +153,8 @@ def discover_routes(app: Any) -> list[tuple[str, str]]:
                         if m.upper() not in ("HEAD", "OPTIONS"):
                             result.append((m.upper(), rule.rule))
         except Exception:
-            pass
+            _log.exception("FlowSurgeon: error discovering routes from Flask url_map")
+        _log.debug("FlowSurgeon: discovered %d routes via url_map", len(result))
         return result
 
     # Try common wrapper patterns: .app / .application / bound method __self__
@@ -160,6 +165,7 @@ def discover_routes(app: Any) -> list[tuple[str, str]]:
             if found:
                 return found
 
+    _log.debug("FlowSurgeon: no routes discovered for %s", type(app).__name__)
     return []
 
 
@@ -280,21 +286,14 @@ def _paginate(items: list, page: int, page_size: int = _PAGE_SIZE) -> tuple[list
 
 
 def render_panel(record: RequestRecord, debug_route: str, slow_threshold: float = 100.0) -> str:
-    """Return the HTML fragment for the inline debug panel."""
+    """Return the HTML fragment for the injected debug button."""
     css = _load_asset("panel.css")
-    js = _load_asset("panel.js")
-    sql_counts: Counter[str] = Counter(q.sql for q in record.queries)
-    sql_total_ms = sum(q.duration_ms for q in record.queries)
     tmpl = _env.get_template("panel.html")
     return tmpl.render(
         record=record,
         debug_route=debug_route,
         css=css,
-        js=js,
         status_class=_status_class(record.status_code),
-        sql_total_ms=sql_total_ms,
-        sql_counts=sql_counts,
-        slow_threshold=slow_threshold,
     )
 
 

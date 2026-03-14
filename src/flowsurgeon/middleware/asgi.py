@@ -5,14 +5,19 @@ import os
 import time
 from typing import Awaitable, Callable
 
+import logging
+
 from flowsurgeon._http import (
     _HTML_CONTENT_TYPES,
     _MIME_TYPES,
+    _TEXT_CONTENT_TYPES,
     _decode_body,
     _parse_qs_int,
     _parse_qs_param,
     _strip_ipv6_zone,
 )
+
+_log = logging.getLogger(__name__)
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.profiling import _parse_profile
@@ -278,23 +283,31 @@ class FlowSurgeonASGI:
             ),
         )
 
-        # Always buffer the full response so we can inspect/store the body.
-        # (This middleware is development-only, so no-streaming is acceptable.)
         start_message: dict | None = None
         is_html = False
+        is_text = False
+        streaming = False
         body_chunks: list[bytes] = []
 
         async def capturing_send(message: dict) -> None:
-            nonlocal start_message, is_html
+            nonlocal start_message, is_html, is_text, streaming
 
             if message["type"] == "http.response.start":
                 start_message = message
                 ct = _get_asgi_header(message.get("headers", []), b"content-type") or b""
                 is_html = any(h.encode() in ct for h in _HTML_CONTENT_TYPES)
+                is_text = any(t.encode() in ct for t in _TEXT_CONTENT_TYPES)
+                if not is_text:
+                    # Binary response: forward immediately, don't buffer
+                    streaming = True
+                    await send(message)
                 return
 
             if message["type"] == "http.response.body":
-                body_chunks.append(message.get("body", b""))
+                if streaming:
+                    await send(message)
+                else:
+                    body_chunks.append(message.get("body", b""))
 
         queries, token = (
             begin_query_collection()
@@ -321,9 +334,7 @@ class FlowSurgeonASGI:
 
         status_code: int = start_message["status"]
         resp_raw_headers: list[tuple[bytes, bytes]] = start_message.get("headers", [])
-
         ct_header = (_get_asgi_header(resp_raw_headers, b"content-type") or b"").decode("latin-1")
-        body = b"".join(body_chunks)
 
         record.status_code = status_code
         record.duration_ms = duration_ms
@@ -331,9 +342,21 @@ class FlowSurgeonASGI:
             resp_raw_headers, self._config.strip_sensitive_headers
         )
         record.queries = queries
-        record.response_body = _decode_body(body, ct_header)
 
-        # Persist asynchronously (non-blocking)
+        if streaming:
+            # Binary response already forwarded — just save metadata
+            record.response_body = None
+            await self._storage.enqueue(record, self._config.max_stored_requests)
+            return
+
+        # --- Text response: buffered ---
+        body = b"".join(body_chunks)
+
+        if self._config.capture_response_body:
+            record.response_body = _decode_body(body, ct_header)
+        else:
+            record.response_body = None
+
         await self._storage.enqueue(record, self._config.max_stored_requests)
 
         if is_html:
@@ -394,5 +417,3 @@ def _get_asgi_header(headers: list[tuple[bytes, bytes]], name: bytes) -> bytes |
         if k.lower() == name_lower:
             return v
     return None
-
-
