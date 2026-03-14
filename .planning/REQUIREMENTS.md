@@ -96,32 +96,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UIDS-01 | TBD | Pending |
-| UIDS-02 | TBD | Pending |
-| UIDS-03 | TBD | Pending |
-| UIDS-04 | TBD | Pending |
-| UIDS-05 | TBD | Pending |
-| RHOM-01 | TBD | Pending |
-| RHOM-02 | TBD | Pending |
-| RHOM-03 | TBD | Pending |
-| RHOM-04 | TBD | Pending |
-| RHOM-05 | TBD | Pending |
-| RDET-01 | TBD | Pending |
-| RDET-02 | TBD | Pending |
-| RDET-03 | TBD | Pending |
-| DPOL-01 | TBD | Pending |
-| DPOL-02 | TBD | Pending |
-| SDOC-01 | TBD | Pending |
-| SDOC-02 | TBD | Pending |
-| SDOC-03 | TBD | Pending |
-| ANMT-01 | TBD | Pending |
-| ANMT-02 | TBD | Pending |
+| UIDS-01 | Phase 1 | Pending |
+| UIDS-02 | Phase 1 | Pending |
+| UIDS-03 | Phase 1 | Pending |
+| UIDS-04 | Phase 1 | Pending |
+| UIDS-05 | Phase 1 | Pending |
+| RHOM-01 | Phase 2 | Pending |
+| RHOM-02 | Phase 2 | Pending |
+| RHOM-03 | Phase 2 | Pending |
+| RHOM-04 | Phase 2 | Pending |
+| RHOM-05 | Phase 2 | Pending |
+| RDET-01 | Phase 2 | Pending |
+| RDET-02 | Phase 2 | Pending |
+| RDET-03 | Phase 2 | Pending |
+| DPOL-01 | Phase 2 | Pending |
+| DPOL-02 | Phase 2 | Pending |
+| SDOC-01 | Phase 3 | Pending |
+| SDOC-02 | Phase 3 | Pending |
+| SDOC-03 | Phase 3 | Pending |
+| ANMT-01 | Phase 4 | Pending |
+| ANMT-02 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20
+- Mapped to phases: 20
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-15 after roadmap creation*
