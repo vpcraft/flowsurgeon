@@ -473,6 +473,42 @@
       color: var(--color-method-head-fg);
     }
 
+    /* ── Method row backgrounds (list view) ── */
+    /* Each row gets the method color as its background; text is overridden to white */
+    .tr.m-GET-row    { background: var(--color-method-get-bg); }
+    .tr.m-POST-row   { background: var(--color-method-post-bg); }
+    .tr.m-PUT-row    { background: var(--color-method-put-bg); }
+    .tr.m-PATCH-row  { background: var(--color-method-patch-bg); }
+    .tr.m-DELETE-row { background: var(--color-method-delete-bg); }
+    .tr.m-HEAD-row   { background: var(--color-method-head-bg); }
+    .tr.m-OTHER-row  { background: var(--color-method-head-bg); }
+
+    /* Override text colors to white on the colored rows */
+    .tr.m-GET-row .td,
+    .tr.m-POST-row .td,
+    .tr.m-PUT-row .td,
+    .tr.m-PATCH-row .td,
+    .tr.m-DELETE-row .td,
+    .tr.m-HEAD-row .td,
+    .tr.m-OTHER-row .td    { color: var(--text-primary); }
+
+    .tr.m-GET-row .td-dim,
+    .tr.m-POST-row .td-dim,
+    .tr.m-PUT-row .td-dim,
+    .tr.m-PATCH-row .td-dim,
+    .tr.m-DELETE-row .td-dim,
+    .tr.m-HEAD-row .td-dim,
+    .tr.m-OTHER-row .td-dim { color: rgba(255,255,255,0.65); }
+
+    /* Hover brightens the row slightly */
+    .tr.m-GET-row:hover    { background: color-mix(in srgb, var(--color-method-get-bg) 85%, white 15%); }
+    .tr.m-POST-row:hover   { background: color-mix(in srgb, var(--color-method-post-bg) 85%, white 15%); }
+    .tr.m-PUT-row:hover    { background: color-mix(in srgb, var(--color-method-put-bg) 85%, white 15%); }
+    .tr.m-PATCH-row:hover  { background: color-mix(in srgb, var(--color-method-patch-bg) 85%, white 15%); }
+    .tr.m-DELETE-row:hover { background: color-mix(in srgb, var(--color-method-delete-bg) 85%, white 15%); }
+    .tr.m-HEAD-row:hover   { background: color-mix(in srgb, var(--color-method-head-bg) 85%, white 15%); }
+    .tr.m-OTHER-row:hover  { background: color-mix(in srgb, var(--color-method-head-bg) 85%, white 15%); }
+
     /* ── Status badge ── */
     .status {
       display: inline-flex;

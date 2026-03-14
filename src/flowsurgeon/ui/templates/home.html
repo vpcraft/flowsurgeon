@@ -20,7 +20,7 @@
 {% if show and show != 25 %}{% set pb = pb + "&show=" + show|string %}{% endif %}
 {% set pb = pb + "&" %}
 
-<div class="spa-wrapper" x-data="{ tab: '{{ active_view }}' }">
+<div class="spa-wrapper" x-data="{ tab: '{{ active_view }}', layout: 'list' }">
 
   {# ── Section header ── #}
   <div class="section-header">
@@ -31,7 +31,7 @@
     </div>
   </div>
 
-  {# ── Controls row: tab buttons (left) + filters (right) ── #}
+  {# ── Controls row: tab buttons (left) + filters + layout toggle (right) ── #}
   <div class="controls-row">
     <div class="tab-btns">
       <a class="tab-btn"
@@ -48,31 +48,86 @@
       </a>
     </div>
 
-    <form method="get" action="{{ debug_route }}" class="filter-right"
-      x-show="tab === 'latency'" x-cloak>
-      <input type="hidden" name="view" value="latency">
-      <span class="filter-label">Path:</span>
-      <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input" style="width:240px;">
-      <span class="filter-label">Show:</span>
-      <select name="show" class="filter-select" style="width:72px;" onchange="this.form.submit()">
-        {% for n in [25, 50, 100] %}
-        <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
-        {% endfor %}
-      </select>
-      <span class="filter-label">Order:</span>
-      <select name="order" class="filter-select" style="width:160px;" onchange="this.form.submit()">
-        <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
-        <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
-        <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
-      </select>
-      <button type="submit" class="filter-btn" style="display:none;">Apply</button>
-    </form>
+    <div class="filter-right" x-show="tab === 'latency'" x-cloak>
+      <form method="get" action="{{ debug_route }}" class="filter-right">
+        <input type="hidden" name="view" value="latency">
+        <span class="filter-label">Path:</span>
+        <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input" style="width:240px;">
+        <span class="filter-label">Show:</span>
+        <select name="show" class="filter-select" style="width:72px;" onchange="this.form.submit()">
+          {% for n in [25, 50, 100] %}
+          <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+        </select>
+        <span class="filter-label">Order:</span>
+        <select name="order" class="filter-select" style="width:160px;" onchange="this.form.submit()">
+          <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
+          <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
+          <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
+        </select>
+        <button type="submit" class="filter-btn" style="display:none;">Apply</button>
+      </form>
+
+      {# ── Layout toggle: List / Cards ── #}
+      <div class="tab-btns" style="margin-left: 8px;">
+        <button class="tab-btn" :class="layout === 'list' ? 'tab-btn-active' : ''"
+          @click="layout = 'list'" type="button" title="List view">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="0" y="1" width="16" height="3" rx="1"/>
+            <rect x="0" y="6.5" width="16" height="3" rx="1"/>
+            <rect x="0" y="12" width="16" height="3" rx="1"/>
+          </svg>
+        </button>
+        <button class="tab-btn" :class="layout === 'cards' ? 'tab-btn-active' : ''"
+          @click="layout = 'cards'" type="button" title="Card view">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="0" y="0" width="7" height="7" rx="1"/>
+            <rect x="9" y="0" width="7" height="7" rx="1"/>
+            <rect x="0" y="9" width="7" height="7" rx="1"/>
+            <rect x="9" y="9" width="7" height="7" rx="1"/>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   {# ── Latency & Queries panel ── #}
   <div class="tab-panel" x-show="tab === 'latency'">
     {% if records %}
-    <div class="req-grid">
+
+    {# ── List view (default) ── #}
+    <div class="table-wrap" x-show="layout === 'list'">
+      <div class="tbl-head">
+        <div class="th w-80">METHOD</div>
+        <div class="th w-fill">PATH</div>
+        <div class="th w-80">STATUS</div>
+        <div class="th w-110">DURATION</div>
+        <div class="th w-110">QUERY TIME</div>
+        <div class="th w-80">QUERIES</div>
+      </div>
+      <div class="tbl-body">
+        {% for r in records %}
+        {% set qms = namespace(val=0.0) %}
+        {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
+        <a class="tr tr-method-row {{ r.method | method_class }}-row" href="{{ debug_route }}/{{ r.request_id }}">
+          <div class="td w-80">
+            <span class="method {{ r.method | method_class }}">{{ r.method }}</span>
+          </div>
+          <div class="td w-fill td-link u-mono" style="font-size:12px;">{{ r.path }}</div>
+          <div class="td w-80">
+            <span class="status {{ r.status_code | status_class }}">{{ r.status_code }}</span>
+          </div>
+          <div class="td w-110 {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }}ms</div>
+          <div class="td w-110 td-dim">{{ "%.0f"|format(qms.val) }}ms</div>
+          <div class="td w-80 td-dim">{{ r.queries | length }}</div>
+        </a>
+        {% if not loop.last %}<div class="sep"></div>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    {# ── Card view ── #}
+    <div class="req-grid" x-show="layout === 'cards'" x-cloak>
       {% for r in records %}
       {% set qms = namespace(val=0.0) %}
       {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
@@ -88,6 +143,7 @@
       </a>
       {% endfor %}
     </div>
+
     {% else %}
     <div class="empty">No requests recorded{% if q %} matching &ldquo;{{ q }}&rdquo;{% endif %}.</div>
     {% endif %}
