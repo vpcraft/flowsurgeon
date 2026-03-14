@@ -5,94 +5,71 @@
 {% block topbar %}
 <nav class="topbar">
   <span class="logo">FlowSurgeon</span>
-  <a class="nav-item active" href="{{ debug_route }}">
-    <span>Requests</span>
-    <div class="nav-underline"></div>
-  </a>
 </nav>
 {% endblock %}
 
 {% block content %}
-{# Pagination base URL always uses view=latency so page links land on the latency tab #}
-{% set pb = debug_route + "?view=latency" %}
-{% if q %}{% set pb = pb + "&q=" + q %}{% endif %}
-{% if order and order != "queries" %}{% set pb = pb + "&order=" + order %}{% endif %}
-{% if show and show != 25 %}{% set pb = pb + "&show=" + show|string %}{% endif %}
-{% set pb = pb + "&" %}
+{# Pagination base URL #}
+{% set pb = debug_route + "?" %}
+{% if q %}{% set pb = pb + "q=" + q + "&" %}{% endif %}
+{% if order and order != "queries" %}{% set pb = pb + "order=" + order + "&" %}{% endif %}
+{% if show and show != 25 %}{% set pb = pb + "show=" + show|string + "&" %}{% endif %}
 
-<div class="spa-wrapper" x-data="{ tab: '{{ active_view }}', layout: 'list' }">
+<div class="spa-wrapper" x-data="{ layout: 'list' }">
 
   {# ── Section header ── #}
   <div class="section-header">
-    <h1 class="section-title">Requests</h1>
-    <div class="stat-badge" x-show="tab === 'latency'" x-cloak>
+    <div class="stat-badge">
       <span class="dot"></span>
       <span>{{ total_records }} request{% if total_records != 1 %}s{% endif %}</span>
     </div>
-  </div>
 
-  {# ── Controls row: tab buttons (left) + filters + layout toggle (right) ── #}
-  <div class="controls-row">
-    <div class="tab-btns">
-      <a class="tab-btn"
-        :class="tab === 'latency' ? 'tab-btn-active' : ''"
-        href="{{ debug_route }}?view=latency{% if q %}&q={{ q }}{% endif %}{% if order and order != 'queries' %}&order={{ order }}{% endif %}{% if show and show != 25 %}&show={{ show }}{% endif %}"
-        @click.prevent="tab = 'latency'">
-        Latency &amp; Queries
-      </a>
-      <a class="tab-btn"
-        :class="tab === 'profiling' ? 'tab-btn-active' : ''"
-        href="{{ debug_route }}?view=profiling"
-        @click.prevent="tab = 'profiling'">
-        Profiling
-      </a>
-    </div>
+    <div class="controls-row">
+      <div class="filter-right">
+        <form method="get" action="{{ debug_route }}" class="filter-right">
+          <span class="filter-label">Path:</span>
+          <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input filter-input-path">
+          <span class="filter-label">Show:</span>
+          <select name="show" class="filter-select filter-input-show" onchange="this.form.submit()">
+            {% for n in [25, 50, 100] %}
+            <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
+            {% endfor %}
+          </select>
+          <span class="filter-label">Order:</span>
+          <select name="order" class="filter-select filter-input-order" onchange="this.form.submit()">
+            <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
+            <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
+            <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
+          </select>
+          <button type="submit" class="filter-btn u-hidden">Apply</button>
+        </form>
 
-    <div class="filter-right" x-show="tab === 'latency'" x-cloak>
-      <form method="get" action="{{ debug_route }}" class="filter-right">
-        <input type="hidden" name="view" value="latency">
-        <span class="filter-label">Path:</span>
-        <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input filter-input-path">
-        <span class="filter-label">Show:</span>
-        <select name="show" class="filter-select filter-input-show" onchange="this.form.submit()">
-          {% for n in [25, 50, 100] %}
-          <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
-          {% endfor %}
-        </select>
-        <span class="filter-label">Order:</span>
-        <select name="order" class="filter-select filter-input-order" onchange="this.form.submit()">
-          <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
-          <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
-          <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
-        </select>
-        <button type="submit" class="filter-btn u-hidden">Apply</button>
-      </form>
-
-      {# ── Layout toggle: List / Cards ── #}
-      <div class="tab-btns tab-btns-ml">
-        <button class="tab-btn" :class="layout === 'list' ? 'tab-btn-active' : ''"
-          @click="layout = 'list'" type="button" title="List view">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <rect x="0" y="1" width="16" height="3" rx="1"/>
-            <rect x="0" y="6.5" width="16" height="3" rx="1"/>
-            <rect x="0" y="12" width="16" height="3" rx="1"/>
-          </svg>
-        </button>
-        <button class="tab-btn" :class="layout === 'cards' ? 'tab-btn-active' : ''"
-          @click="layout = 'cards'" type="button" title="Card view">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <rect x="0" y="0" width="7" height="7" rx="1"/>
-            <rect x="9" y="0" width="7" height="7" rx="1"/>
-            <rect x="0" y="9" width="7" height="7" rx="1"/>
-            <rect x="9" y="9" width="7" height="7" rx="1"/>
-          </svg>
-        </button>
+        {# ── Layout toggle: List / Cards ── #}
+        <div class="tab-btns tab-btns-ml">
+          <button class="tab-btn" :class="layout === 'list' ? 'tab-btn-active' : ''"
+            @click="layout = 'list'" type="button" title="List view">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <rect x="0" y="1" width="16" height="3" rx="1"/>
+              <rect x="0" y="6.5" width="16" height="3" rx="1"/>
+              <rect x="0" y="12" width="16" height="3" rx="1"/>
+            </svg>
+          </button>
+          <button class="tab-btn" :class="layout === 'cards' ? 'tab-btn-active' : ''"
+            @click="layout = 'cards'" type="button" title="Card view">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <rect x="0" y="0" width="7" height="7" rx="1"/>
+              <rect x="9" y="0" width="7" height="7" rx="1"/>
+              <rect x="0" y="9" width="7" height="7" rx="1"/>
+              <rect x="9" y="9" width="7" height="7" rx="1"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  {# ── Latency & Queries panel ── #}
-  <div class="tab-panel" x-show="tab === 'latency'">
+  {# ── Requests panel ── #}
+  <div class="tab-panel">
     {% if records %}
 
     {# ── List view (default) ── #}
@@ -109,7 +86,7 @@
         {% for r in records %}
         {% set qms = namespace(val=0.0) %}
         {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
-        <a class="tr tr-method-row {{ r.method | method_class }}-row" href="{{ debug_route }}/{{ r.request_id }}">
+        <a class="tr" href="{{ debug_route }}/{{ r.request_id }}">
           <div class="td w-80">
             <span class="method {{ r.method | method_class }}">{{ r.method }}</span>
           </div>
@@ -121,7 +98,6 @@
           <div class="td w-110 td-dim">{{ "%.0f"|format(qms.val) }}ms</div>
           <div class="td w-80 td-dim">{{ r.queries | length }}</div>
         </a>
-        {% if not loop.last %}<div class="sep"></div>{% endif %}
         {% endfor %}
       </div>
     </div>
@@ -160,21 +136,6 @@
     {% endif %}
   </div>
 
-  {# ── Profiling panel ── #}
-  <div class="profiling-placeholder" x-show="tab === 'profiling'" x-cloak>
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="1.5"
-      stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path
-        d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
-    </svg>
-    <span class="profiling-title">Profiling</span>
-    {% if profiling_enabled %}
-    <span class="profiling-sub">Call-stack profiling is enabled — open any request and click the <strong class="u-muted">Profile</strong> tab to inspect its call graph.</span>
-    {% else %}
-    <span class="profiling-sub">Enable <code class="u-mono u-text-md u-muted">enable_profiling=True</code> in Config to capture per-request call-stack data.</span>
-    {% endif %}
-  </div>
 
 </div>
 {% endblock %}

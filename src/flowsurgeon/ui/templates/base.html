@@ -26,19 +26,19 @@
 
       --color-brand:    #00D4AA;
 
-      /* Method badge colors (Swagger convention) */
-      --color-method-get-bg:    #1a3a5c;
-      --color-method-get-fg:    #60A5FA;
-      --color-method-post-bg:   #1a3b2a;
-      --color-method-post-fg:   #34D399;
-      --color-method-put-bg:    #3b2a1a;
-      --color-method-put-fg:    #FB923C;
-      --color-method-delete-bg: #3b1a1a;
-      --color-method-delete-fg: #F87171;
-      --color-method-patch-bg:  #2a1a3b;
-      --color-method-patch-fg:  #A78BFA;
-      --color-method-head-bg:   #1E2328;
-      --color-method-head-fg:   #9CA3AF;
+      /* Method badge colors (Swagger convention — solid bg, white text) */
+      --color-method-get-bg:    #61AFFE;
+      --color-method-get-fg:    #FFFFFF;
+      --color-method-post-bg:   #49CC90;
+      --color-method-post-fg:   #FFFFFF;
+      --color-method-put-bg:    #FCA130;
+      --color-method-put-fg:    #FFFFFF;
+      --color-method-delete-bg: #F93E3E;
+      --color-method-delete-fg: #FFFFFF;
+      --color-method-patch-bg:  #50E3C2;
+      --color-method-patch-fg:  #FFFFFF;
+      --color-method-head-bg:   #9012FE;
+      --color-method-head-fg:   #FFFFFF;
 
       /* Status badge colors */
       --color-status-2xx-bg:    #1a3b2a;
@@ -354,14 +354,16 @@
       display: flex;
       align-items: center;
       padding: 0 var(--space-6);
+      border-bottom: 1px solid var(--border-color);
+      transition: background var(--transition-fast);
+    }
+
+    .tr:last-child {
+      border-bottom: none;
     }
 
     .tr-req {
       height: 48px;
-    }
-
-    .tr {
-      transition: background var(--transition-fast);
     }
 
     .tr:hover {
@@ -472,42 +474,6 @@
       background: var(--color-method-head-bg);
       color: var(--color-method-head-fg);
     }
-
-    /* ── Method row backgrounds (list view) ── */
-    /* Each row gets the method color as its background; text is overridden to white */
-    .tr.m-GET-row    { background: var(--color-method-get-bg); }
-    .tr.m-POST-row   { background: var(--color-method-post-bg); }
-    .tr.m-PUT-row    { background: var(--color-method-put-bg); }
-    .tr.m-PATCH-row  { background: var(--color-method-patch-bg); }
-    .tr.m-DELETE-row { background: var(--color-method-delete-bg); }
-    .tr.m-HEAD-row   { background: var(--color-method-head-bg); }
-    .tr.m-OTHER-row  { background: var(--color-method-head-bg); }
-
-    /* Override text colors to white on the colored rows */
-    .tr.m-GET-row .td,
-    .tr.m-POST-row .td,
-    .tr.m-PUT-row .td,
-    .tr.m-PATCH-row .td,
-    .tr.m-DELETE-row .td,
-    .tr.m-HEAD-row .td,
-    .tr.m-OTHER-row .td    { color: var(--text-primary); }
-
-    .tr.m-GET-row .td-dim,
-    .tr.m-POST-row .td-dim,
-    .tr.m-PUT-row .td-dim,
-    .tr.m-PATCH-row .td-dim,
-    .tr.m-DELETE-row .td-dim,
-    .tr.m-HEAD-row .td-dim,
-    .tr.m-OTHER-row .td-dim { color: rgba(255,255,255,0.65); }
-
-    /* Hover brightens the row slightly */
-    .tr.m-GET-row:hover    { background: color-mix(in srgb, var(--color-method-get-bg) 85%, white 15%); }
-    .tr.m-POST-row:hover   { background: color-mix(in srgb, var(--color-method-post-bg) 85%, white 15%); }
-    .tr.m-PUT-row:hover    { background: color-mix(in srgb, var(--color-method-put-bg) 85%, white 15%); }
-    .tr.m-PATCH-row:hover  { background: color-mix(in srgb, var(--color-method-patch-bg) 85%, white 15%); }
-    .tr.m-DELETE-row:hover { background: color-mix(in srgb, var(--color-method-delete-bg) 85%, white 15%); }
-    .tr.m-HEAD-row:hover   { background: color-mix(in srgb, var(--color-method-head-bg) 85%, white 15%); }
-    .tr.m-OTHER-row:hover  { background: color-mix(in srgb, var(--color-method-head-bg) 85%, white 15%); }
 
     /* ── Status badge ── */
     .status {

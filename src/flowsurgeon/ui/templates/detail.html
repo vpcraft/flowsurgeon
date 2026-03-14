@@ -40,13 +40,6 @@
     <span>Traceback</span>
     <div class="subnav-underline" x-show="tab === 'traceback'"></div>
   </a>
-  <a class="subnav-item"
-    :class="tab === 'profile' ? 'active' : 'inactive'"
-    href="{{ debug_route }}/{{ record.request_id }}?tab=profile"
-    @click.prevent="tab = 'profile'">
-    <span>Profile</span>
-    <div class="subnav-underline" x-show="tab === 'profile'"></div>
-  </a>
 </div>
 {% endblock %}
 
@@ -174,11 +167,6 @@
 {# ── Traceback tab ── #}
 <div class="tab-panel" x-show="tab === 'traceback'" x-cloak>
   {% include "partials/detail_traceback.html" %}
-</div>
-
-{# ── Profile tab ── #}
-<div class="tab-panel" x-show="tab === 'profile'" x-cloak>
-  {% include "partials/detail_profile.html" %}
 </div>
 
 {% endblock %}
