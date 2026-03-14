@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-14T21:08:55.633Z"
+stopped_at: "Checkpoint: 01-01 Task 1 complete, awaiting visual verification"
+last_updated: "2026-03-14T21:32:52.794Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-css-design-system P01 | 2min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -61,6 +62,8 @@ Recent decisions affecting current work:
 - CSS design system before routes pages: avoids a second visual-polish pass on newly built pages
 - Routes home before docs: screenshots for docs should show the final UI
 - Phase 3 (Security Docs) is independent of UI phases — can proceed in parallel if needed
+- [Phase 01-css-design-system]: Three edge-case hex values retained outside :root: brand hover variant, cs-2xx neutral, scrollbar thumb
+- [Phase 01-css-design-system]: Focus ring and inset underline box-shadows kept as accessibility/design affordances; only container depth shadows removed
 
 ### Pending Todos
 
@@ -74,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:08:55.632Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-css-design-system/01-CONTEXT.md
+Last session: 2026-03-14T21:32:52.792Z
+Stopped at: Checkpoint: 01-01 Task 1 complete, awaiting visual verification
+Resume file: None

@@ -23,7 +23,7 @@ v0.6.0 is a polish-and-launch milestone on top of a working v0.5.0 codebase. The
   3. Containers are defined by clean borders, not box shadows
   4. Labels and values use distinct typographic weights/colors — labels are muted, values are bright
   5. No inline `style=` attributes remain in any template — all overrides are utility classes
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 01-01-PLAN.md — Build CSS token layer, refactor base.html (tokens, badges, borders, typography, utilities)
 - [ ] 01-02-PLAN.md — Replace inline style= attributes across all template files with utility classes
@@ -63,7 +63,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. CSS Design System | 0/2 | Planned | - |
+| 1. CSS Design System | 1/2 | In Progress|  |
 | 2. Routes Pages | 0/TBD | Not started | - |
 | 3. Security Documentation | 0/TBD | Not started | - |
 | 4. Announcement Assets | 0/TBD | Not started | - |

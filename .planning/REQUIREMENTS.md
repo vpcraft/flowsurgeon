@@ -9,10 +9,10 @@ Requirements for v0.6.0 release. Each maps to roadmap phases.
 
 ### UI Design System
 
-- [ ] **UIDS-01**: All hardcoded CSS values extracted to `:root {}` custom properties (colors, spacing, radii)
-- [ ] **UIDS-02**: HTTP method badges follow Swagger convention (GET=blue, POST=green, PUT=orange, DELETE=red, PATCH=purple)
-- [ ] **UIDS-03**: Clean borders over shadows as primary container definition
-- [ ] **UIDS-04**: Muted label / bright value typographic hierarchy
+- [x] **UIDS-01**: All hardcoded CSS values extracted to `:root {}` custom properties (colors, spacing, radii)
+- [x] **UIDS-02**: HTTP method badges follow Swagger convention (GET=blue, POST=green, PUT=orange, DELETE=red, PATCH=purple)
+- [x] **UIDS-03**: Clean borders over shadows as primary container definition
+- [x] **UIDS-04**: Muted label / bright value typographic hierarchy
 - [ ] **UIDS-05**: Inline style overrides in templates replaced with utility classes
 
 ### Routes Home Page
@@ -96,10 +96,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UIDS-01 | Phase 1 | Pending |
-| UIDS-02 | Phase 1 | Pending |
-| UIDS-03 | Phase 1 | Pending |
-| UIDS-04 | Phase 1 | Pending |
+| UIDS-01 | Phase 1 | Complete |
+| UIDS-02 | Phase 1 | Complete |
+| UIDS-03 | Phase 1 | Complete |
+| UIDS-04 | Phase 1 | Complete |
 | UIDS-05 | Phase 1 | Pending |
 | RHOM-01 | Phase 2 | Pending |
 | RHOM-02 | Phase 2 | Pending |
