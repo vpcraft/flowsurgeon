@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: "Checkpoint: 01-01 Task 1 complete, awaiting visual verification"
-last_updated: "2026-03-14T21:32:52.794Z"
+stopped_at: Completed 01-css-design-system/01-01-PLAN.md
+last_updated: "2026-03-14T22:02:11.869Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
   total_phases: 4
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-css-design-system P01 | 2min | 1 tasks | 1 files |
+| Phase 01-css-design-system P01 | 45min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,8 @@ Recent decisions affecting current work:
 - Phase 3 (Security Docs) is independent of UI phases — can proceed in parallel if needed
 - [Phase 01-css-design-system]: Three edge-case hex values retained outside :root: brand hover variant, cs-2xx neutral, scrollbar thumb
 - [Phase 01-css-design-system]: Focus ring and inset underline box-shadows kept as accessibility/design affordances; only container depth shadows removed
+- [Phase 01-css-design-system]: List view is default per user feedback (Swagger UI pattern); card view accessible via toggle icon
+- [Phase 01-css-design-system]: Method row backgrounds reuse --color-method-*-bg tokens for visual continuity with badges
 
 ### Pending Todos
 
@@ -77,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T21:32:52.792Z
-Stopped at: Checkpoint: 01-01 Task 1 complete, awaiting visual verification
+Last session: 2026-03-14T22:02:11.867Z
+Stopped at: Completed 01-css-design-system/01-01-PLAN.md
 Resume file: None
