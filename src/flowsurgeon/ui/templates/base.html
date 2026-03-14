@@ -1147,6 +1147,244 @@
 
     /* Display: none helper (complement to x-cloak) */
     .u-hidden { display: none; }
+
+    /* Text alignment */
+    .u-text-right { text-align: right; }
+
+    /* Font weight */
+    .u-fw-500 { font-weight: 500; }
+    .u-fw-600 { font-weight: 600; }
+    .u-fw-700 { font-weight: 700; }
+
+    /* Display: block */
+    .u-block { display: block; }
+
+    /* Margin-top micro */
+    .u-mt-1 { margin-top: var(--space-1); }
+    .u-mt-2 { margin-top: var(--space-2); }
+
+    /* ── Profile tab component classes ── */
+    .profile-header {
+      display: flex;
+      gap: var(--space-4);
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 80px 90px 90px 160px;
+      gap: 0;
+      padding: 0 var(--space-6);
+    }
+
+    .profile-th {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-th-first {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding: 10px 8px 10px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-th-last {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      padding: 10px 0 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-cell {
+      padding: 10px 8px 4px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-cell-right {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 10px 8px 4px;
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-cell-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 10px 8px 4px;
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-cell-first {
+      padding: 10px 8px 4px 0;
+    }
+
+    .profile-cell-bar {
+      padding: 10px 0 4px 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+    }
+
+    .profile-func {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-body);
+      font-weight: 500;
+    }
+
+    .profile-file {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-top: 2px;
+    }
+
+    .profile-callers-toggle {
+      margin-top: 6px;
+    }
+
+    .profile-callers-summary {
+      font-size: 11px;
+      color: var(--text-dim);
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      outline: none;
+    }
+
+    .profile-callers-arrow {
+      color: var(--text-faint);
+    }
+
+    .profile-callers-list {
+      padding: 6px 0 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-left: 2px solid var(--border-color);
+      margin-top: 4px;
+    }
+
+    .profile-caller-item {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .profile-caller-file {
+      color: var(--text-faint);
+    }
+
+    .profile-caller-time {
+      color: var(--text-dim);
+    }
+
+    .profile-bar-track {
+      width: 100%;
+      background: var(--border-color);
+      border-radius: 3px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .profile-bar-fill {
+      height: 8px;
+      background: var(--color-brand);
+      border-radius: 3px;
+      opacity: 0.8;
+    }
+
+    /* ── SQL tab component classes ── */
+    .sql-header {
+      display: flex;
+      gap: var(--space-4);
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .sql-tbl-body {
+      padding: 0 var(--space-6);
+    }
+
+    /* stat-badge padding override for tab headers */
+    .stat-badge-sm {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 4px 12px;
+    }
+
+    /* ── Traceback tab component classes ── */
+    .trace-header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      flex-shrink: 0;
+    }
+
+    .trace-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .trace-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .trace-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* filter-input width variants */
+    .filter-input-path   { width: 240px; }
+    .filter-input-show   { width: 72px; }
+    .filter-input-order  { width: 160px; }
+
+    /* tab-btns margin variant */
+    .tab-btns-ml { margin-left: 8px; }
+
+    /* path td font size */
+    .td-path { font-size: 12px; }
+
+    /* card-badge margin-top variant */
+    .card-badge-mt { margin-top: 4px; }
+
+    /* code-line faint */
+    .code-line-faint { color: var(--text-faint); }
+
+    /* field-val monospace */
+    .field-val-mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    /* code-block scrollable */
+    .code-block-scroll {
+      max-height: 300px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 

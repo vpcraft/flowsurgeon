@@ -52,24 +52,24 @@
       <form method="get" action="{{ debug_route }}" class="filter-right">
         <input type="hidden" name="view" value="latency">
         <span class="filter-label">Path:</span>
-        <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input" style="width:240px;">
+        <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input filter-input-path">
         <span class="filter-label">Show:</span>
-        <select name="show" class="filter-select" style="width:72px;" onchange="this.form.submit()">
+        <select name="show" class="filter-select filter-input-show" onchange="this.form.submit()">
           {% for n in [25, 50, 100] %}
           <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
           {% endfor %}
         </select>
         <span class="filter-label">Order:</span>
-        <select name="order" class="filter-select" style="width:160px;" onchange="this.form.submit()">
+        <select name="order" class="filter-select filter-input-order" onchange="this.form.submit()">
           <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
           <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
           <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
         </select>
-        <button type="submit" class="filter-btn" style="display:none;">Apply</button>
+        <button type="submit" class="filter-btn u-hidden">Apply</button>
       </form>
 
       {# ── Layout toggle: List / Cards ── #}
-      <div class="tab-btns" style="margin-left: 8px;">
+      <div class="tab-btns tab-btns-ml">
         <button class="tab-btn" :class="layout === 'list' ? 'tab-btn-active' : ''"
           @click="layout = 'list'" type="button" title="List view">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -113,7 +113,7 @@
           <div class="td w-80">
             <span class="method {{ r.method | method_class }}">{{ r.method }}</span>
           </div>
-          <div class="td w-fill td-link u-mono" style="font-size:12px;">{{ r.path }}</div>
+          <div class="td w-fill td-link u-mono td-path">{{ r.path }}</div>
           <div class="td w-80">
             <span class="status {{ r.status_code | status_class }}">{{ r.status_code }}</span>
           </div>
@@ -170,9 +170,9 @@
     </svg>
     <span class="profiling-title">Profiling</span>
     {% if profiling_enabled %}
-    <span class="profiling-sub">Call-stack profiling is enabled — open any request and click the <strong style="color:#9CA3AF;">Profile</strong> tab to inspect its call graph.</span>
+    <span class="profiling-sub">Call-stack profiling is enabled — open any request and click the <strong class="u-muted">Profile</strong> tab to inspect its call graph.</span>
     {% else %}
-    <span class="profiling-sub">Enable <code style="font-family:monospace; font-size:13px; color:#9CA3AF;">enable_profiling=True</code> in Config to capture per-request call-stack data.</span>
+    <span class="profiling-sub">Enable <code class="u-mono u-text-md u-muted">enable_profiling=True</code> in Config to capture per-request call-stack data.</span>
     {% endif %}
   </div>
 
