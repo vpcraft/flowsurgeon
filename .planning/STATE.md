@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-css-design-system/01-01-PLAN.md
-last_updated: "2026-03-14T22:02:11.869Z"
+stopped_at: Completed 01-css-design-system/01-02-PLAN.md
+last_updated: "2026-03-14T22:44:02.596Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-css-design-system P01 | 2min | 1 tasks | 1 files |
 | Phase 01-css-design-system P01 | 45min | 2 tasks | 2 files |
+| Phase 01-css-design-system P02 | 45min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 01-css-design-system]: Focus ring and inset underline box-shadows kept as accessibility/design affordances; only container depth shadows removed
 - [Phase 01-css-design-system]: List view is default per user feedback (Swagger UI pattern); card view accessible via toggle icon
 - [Phase 01-css-design-system]: Method row backgrounds reuse --color-method-*-bg tokens for visual continuity with badges
+- [Phase 01-css-design-system]: Method badge tokens updated to Swagger solid-color palette (blue/green/orange/red/teal/purple) with white text
+- [Phase 01-css-design-system]: Row background colors removed; professional bordered-row admin pattern used instead
+- [Phase 01-css-design-system]: Latency & Queries, Profiling, and Profile tabs removed from home/detail pages; list view is sole view on home
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T22:02:11.867Z
-Stopped at: Completed 01-css-design-system/01-01-PLAN.md
+Last session: 2026-03-14T22:44:02.594Z
+Stopped at: Completed 01-css-design-system/01-02-PLAN.md
 Resume file: None
