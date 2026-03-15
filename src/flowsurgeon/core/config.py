@@ -47,6 +47,9 @@ class Config:
     )
     profile_top_n: int = 50  # keep top N functions by cumulative time
     profile_user_code_only: bool = True  # filter out stdlib + third-party frames
+    # Whether to capture and store response bodies. Disable to avoid storing
+    # sensitive data (e.g. API tokens returned in JSON responses).
+    capture_response_body: bool = True
 
     def __post_init__(self) -> None:
         # Clamp profile_top_n — negative values have no useful meaning.

@@ -1,124 +1,80 @@
 {% extends "base.html" %}
 
-{% block title %}FlowSurgeon — Requests{% endblock %}
+{% block title %}FlowSurgeon — Routes{% endblock %}
 
 {% block topbar %}
 <nav class="topbar">
   <span class="logo">FlowSurgeon</span>
-  <a class="nav-item active" href="{{ debug_route }}">
-    <span>Requests</span>
-    <div class="nav-underline"></div>
-  </a>
 </nav>
 {% endblock %}
 
 {% block content %}
-{# Pagination base URL always uses view=latency so page links land on the latency tab #}
-{% set pb = debug_route + "?view=latency" %}
-{% if q %}{% set pb = pb + "&q=" + q %}{% endif %}
-{% if order and order != "queries" %}{% set pb = pb + "&order=" + order %}{% endif %}
-{% if show and show != 25 %}{% set pb = pb + "&show=" + show|string %}{% endif %}
-{% set pb = pb + "&" %}
+<div class="spa-wrapper" x-data="{ methodFilter: 'ALL' }">
 
-<div class="spa-wrapper" x-data="{ tab: '{{ active_view }}' }">
-
-  {# ── Section header ── #}
-  <div class="section-header">
-    <h1 class="section-title">Requests</h1>
-    <div class="stat-badge" x-show="tab === 'latency'" x-cloak>
-      <span class="dot"></span>
-      <span>{{ total_records }} request{% if total_records != 1 %}s{% endif %}</span>
-    </div>
+  {# ── Method filter pills ── #}
+  <div class="filter-pills" style="flex-shrink: 0;">
+    {% for m in ['ALL', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'] %}
+    <button
+      class="pill"
+      :class="methodFilter === '{{ m }}' ? 'pill-active' : ''"
+      @click="methodFilter = '{{ m }}'"
+      type="button"
+    >{{ m }}</button>
+    {% endfor %}
   </div>
 
-  {# ── Controls row: tab buttons (left) + filters (right) ── #}
-  <div class="controls-row">
-    <div class="tab-btns">
-      <a class="tab-btn"
-        :class="tab === 'latency' ? 'tab-btn-active' : ''"
-        href="{{ debug_route }}?view=latency{% if q %}&q={{ q }}{% endif %}{% if order and order != 'queries' %}&order={{ order }}{% endif %}{% if show and show != 25 %}&show={{ show }}{% endif %}"
-        @click.prevent="tab = 'latency'">
-        Latency &amp; Queries
-      </a>
-      <a class="tab-btn"
-        :class="tab === 'profiling' ? 'tab-btn-active' : ''"
-        href="{{ debug_route }}?view=profiling"
-        @click.prevent="tab = 'profiling'">
-        Profiling
-      </a>
-    </div>
-
-    <form method="get" action="{{ debug_route }}" class="filter-right"
-      x-show="tab === 'latency'" x-cloak>
-      <input type="hidden" name="view" value="latency">
-      <span class="filter-label">Path:</span>
-      <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input" style="width:240px;">
-      <span class="filter-label">Show:</span>
-      <select name="show" class="filter-select" style="width:72px;" onchange="this.form.submit()">
-        {% for n in [25, 50, 100] %}
-        <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
-        {% endfor %}
-      </select>
-      <span class="filter-label">Order:</span>
-      <select name="order" class="filter-select" style="width:160px;" onchange="this.form.submit()">
-        <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
-        <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
-        <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
-      </select>
-      <button type="submit" class="filter-btn" style="display:none;">Apply</button>
-    </form>
+  {# ── Route count ── #}
+  <div style="padding: 0 var(--space-4); flex-shrink: 0;">
+    <span class="u-dim u-text-sm">{{ total_routes }} route{% if total_routes != 1 %}s{% endif %}</span>
   </div>
 
-  {# ── Latency & Queries panel ── #}
-  <div class="tab-panel" x-show="tab === 'latency'">
-    {% if records %}
-    <div class="req-grid">
-      {% for r in records %}
-      {% set qms = namespace(val=0.0) %}
-      {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
-      <a class="req-card" href="{{ debug_route }}/{{ r.request_id }}">
-        <div class="req-card-top">
-          <span class="{{ r.status_code | card_status_class }}">{{ r.status_code }}</span>
-          <span class="{{ r.method | card_method_class }}">{{ r.method }}</span>
+  {# ── Routes list ── #}
+  {% if total_routes == 0 %}
+  <div class="empty">No routes discovered.</div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="tbl-body">
+      {% for prefix, routes in groups.items() %}
+
+      {# ── Group header ── #}
+      <div class="route-group-hd">{{ prefix }}</div>
+
+      {# ── Route rows ── #}
+      {% for route in routes %}
+      <a
+        class="tr {% if not route.has_data %}tr-no-traffic{% endif %}"
+        href="{{ debug_route }}?method={{ route.method }}&amp;path={{ route.path | urlencode }}"
+        x-show="methodFilter === 'ALL' || methodFilter === '{{ route.method }}'"
+      >
+        {# Left: method badge + path #}
+        <div class="td w-80">
+          <span class="method {{ route.method | method_class }}{% if not route.has_data %} method-muted{% endif %}">{{ route.method }}</span>
         </div>
-        <span class="req-path">{{ r.path }}</span>
-        <span class="req-dur {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }}ms overall</span>
-        <span class="req-qinfo">{{ "%.0f"|format(qms.val) }}ms on queries&nbsp;&middot;&nbsp;{{ r.queries | length }}
-          quer{% if r.queries | length != 1 %}ies{% else %}y{% endif %}</span>
+        <div class="td w-fill u-mono td-path">{{ route.path }}</div>
+
+        {# Right: stats or no-traffic indicator #}
+        {% if route.has_data %}
+        <div class="td-stats">
+          <div class="td w-80 td-dim">{{ route.count }} reqs</div>
+          <div class="td w-80 {{ route.latest_duration_ms | duration_class }}">{{ "%.0f"|format(route.latest_duration_ms) }}ms</div>
+          <div class="td w-80 td-dim">{{ route.latest_query_count }}q</div>
+          <div class="td w-80">
+            <span class="status {{ route.latest_status | status_class }}">{{ route.latest_status }}</span>
+          </div>
+          <div class="td w-110 td-dim">{{ route.last_request_time | relative_time }}</div>
+        </div>
+        {% else %}
+        <div class="td-stats">
+          <div class="td td-dim u-text-sm">No requests</div>
+        </div>
+        {% endif %}
       </a>
       {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty">No requests recorded{% if q %} matching &ldquo;{{ q }}&rdquo;{% endif %}.</div>
-    {% endif %}
 
-    {% if total_pages > 1 %}
-    <div class="pagination-row">
-      <span class="page-info">Showing {{ page_start }}–{{ page_end }} of {{ total_records }} requests</span>
-      <div class="pagination">
-        {% if page > 1 %}<a class="page-btn" href="{{ pb }}page={{ page - 1 }}">← Prev</a>{% endif %}
-        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
-        {% if page < total_pages %}<a class="page-btn" href="{{ pb }}page={{ page + 1 }}">Next →</a>{% endif %}
-      </div>
+      {% endfor %}
     </div>
-    {% endif %}
   </div>
-
-  {# ── Profiling panel ── #}
-  <div class="profiling-placeholder" x-show="tab === 'profiling'" x-cloak>
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="1.5"
-      stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path
-        d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
-    </svg>
-    <span class="profiling-title">Profiling</span>
-    {% if profiling_enabled %}
-    <span class="profiling-sub">Call-stack profiling is enabled — open any request and click the <strong style="color:#9CA3AF;">Profile</strong> tab to inspect its call graph.</span>
-    {% else %}
-    <span class="profiling-sub">Enable <code style="font-family:monospace; font-size:13px; color:#9CA3AF;">enable_profiling=True</code> in Config to capture per-request call-stack data.</span>
-    {% endif %}
-  </div>
+  {% endif %}
 
 </div>
 {% endblock %}

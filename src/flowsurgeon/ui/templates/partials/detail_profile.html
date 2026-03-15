@@ -1,45 +1,43 @@
 {% if profile_stats %}
-<div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
-  <div style="display:flex; gap:16px; align-items:center;">
-    <span style="color:#FFFFFF; font-size:20px; font-weight:700;">Call-Stack Profile</span>
-    <span class="stat-badge" style="padding:4px 12px;">
-      <span style="font-size:12px; color:#9CA3AF;">{{ profile_stats | length }} functions</span>
-    </span>
-    <span style="font-size:12px; color:#6B7280;">sorted by cumulative time · user code only</span>
-  </div>
+<div class="profile-header">
+  <span class="u-bright u-text-lg u-fw-700">Call-Stack Profile</span>
+  <span class="stat-badge-sm">
+    <span class="u-text-sm u-muted">{{ profile_stats | length }} functions</span>
+  </span>
+  <span class="u-text-sm u-dim">sorted by cumulative time · user code only</span>
 </div>
 
-<div class="table-wrap" style="flex:1; min-height:0;">
-  <div style="overflow-y:auto; flex:1; min-height:0;">
-  <div style="display:grid; grid-template-columns:1fr 80px 90px 90px 160px; gap:0; padding:0 24px;">
+<div class="table-wrap u-flex-1 u-min-h-0">
+  <div class="u-scroll-y u-flex-1 u-min-h-0">
+  <div class="profile-grid">
     {# Header #}
-    <span style="font-size:11px; font-weight:600; color:#6B7280; padding:10px 8px 10px 0; border-bottom:1px solid #1E2328;">Function</span>
-    <span style="font-size:11px; font-weight:600; color:#6B7280; padding:10px 8px; border-bottom:1px solid #1E2328; text-align:right;">Calls</span>
-    <span style="font-size:11px; font-weight:600; color:#6B7280; padding:10px 8px; border-bottom:1px solid #1E2328; text-align:right;">Own</span>
-    <span style="font-size:11px; font-weight:600; color:#6B7280; padding:10px 8px; border-bottom:1px solid #1E2328; text-align:right;">Total</span>
-    <span style="font-size:11px; font-weight:600; color:#6B7280; padding:10px 0 10px 12px; border-bottom:1px solid #1E2328;">Time bar</span>
+    <span class="profile-th-first">Function</span>
+    <span class="profile-th u-text-right">Calls</span>
+    <span class="profile-th u-text-right">Own</span>
+    <span class="profile-th u-text-right">Total</span>
+    <span class="profile-th-last">Time bar</span>
 
     {# Rows #}
     {% for stat in profile_stats %}
     {% set pct = (stat.ct_ms / max_ct_ms * 100) | round(1) %}
 
     {# Function cell — spans all rows for this stat #}
-    <div style="padding:10px 8px 4px 0; border-bottom:{% if not stat.callers %}1px solid #1E2328{% else %}none{% endif %};">
-      <span style="font-family:monospace; font-size:12px; color:#E5E7EB; font-weight:500;">{{ stat.func }}</span>
-      <span style="display:block; font-family:monospace; font-size:11px; color:#4B5563; margin-top:2px;">
+    <div class="profile-cell-first" style="border-bottom:{% if not stat.callers %}1px solid var(--border-color){% else %}none{% endif %};">
+      <span class="profile-func">{{ stat.func }}</span>
+      <span class="profile-file">
         {{ stat.file }}{% if stat.line %}:{{ stat.line }}{% endif %}
       </span>
       {% if stat.callers %}
-      <details style="margin-top:6px;">
-        <summary style="font-size:11px; color:#6B7280; cursor:pointer; list-style:none; user-select:none; outline:none;">
-          <span style="color:#4B5563;">&#9654;</span> Called from {{ stat.callers | length }} location{% if stat.callers | length != 1 %}s{% endif %}
+      <details class="profile-callers-toggle">
+        <summary class="profile-callers-summary">
+          <span class="profile-callers-arrow">&#9654;</span> Called from {{ stat.callers | length }} location{% if stat.callers | length != 1 %}s{% endif %}
         </summary>
-        <div style="padding:6px 0 8px 12px; display:flex; flex-direction:column; gap:4px; border-left:2px solid #1E2328; margin-top:4px;">
+        <div class="profile-callers-list">
           {% for c_file, c_func, c_line, c_ct in stat.callers %}
-          <span style="font-family:monospace; font-size:11px; color:#9CA3AF;">
+          <span class="profile-caller-item">
             {{ c_func }}
-            <span style="color:#4B5563;">— {{ c_file }}{% if c_line %}:{{ c_line }}{% endif %}</span>
-            <span style="color:#6B7280;"> ({{ "%.2f"|format(c_ct) }}ms)</span>
+            <span class="profile-caller-file">— {{ c_file }}{% if c_line %}:{{ c_line }}{% endif %}</span>
+            <span class="profile-caller-time"> ({{ "%.2f"|format(c_ct) }}ms)</span>
           </span>
           {% endfor %}
         </div>
@@ -47,20 +45,18 @@
       {% endif %}
     </div>
 
-    <span style="font-family:monospace; font-size:12px; color:#9CA3AF; padding:10px 8px 4px; text-align:right; border-bottom:1px solid #1E2328;">
+    <span class="profile-cell-right">
       {{ stat.calls }}
     </span>
-    <span style="font-family:monospace; font-size:12px; padding:10px 8px 4px; text-align:right; border-bottom:1px solid #1E2328;"
-      class="{{ stat.tt_ms | duration_class }}">
+    <span class="profile-cell-num {{ stat.tt_ms | duration_class }}">
       {{ "%.2f"|format(stat.tt_ms) }}ms
     </span>
-    <span style="font-family:monospace; font-size:12px; padding:10px 8px 4px; text-align:right; border-bottom:1px solid #1E2328;"
-      class="{{ stat.ct_ms | duration_class }}">
+    <span class="profile-cell-num {{ stat.ct_ms | duration_class }}">
       {{ "%.2f"|format(stat.ct_ms) }}ms
     </span>
-    <div style="padding:10px 0 4px 12px; border-bottom:1px solid #1E2328; display:flex; align-items:center;">
-      <div style="width:100%; background:#1E2328; border-radius:3px; height:8px; overflow:hidden;">
-        <div style="width:{{ pct }}%; height:8px; background:#00D4AA; border-radius:3px; opacity:0.8;"></div>
+    <div class="profile-cell-bar">
+      <div class="profile-bar-track">
+        <div class="profile-bar-fill" style="width:{{ pct }}%;"></div>
       </div>
     </div>
 
@@ -73,9 +69,9 @@
 <div class="empty">
   No profile data for this request.
   {% if record.profile_stats is none %}
-  Enable <code style="font-family:monospace; font-size:12px;">enable_profiling=True</code> in Config (or set <code style="font-family:monospace; font-size:12px;">FLOWSURGEON_PROFILING=1</code>) to capture call-stack data.
+  Enable <code class="u-mono u-text-sm">enable_profiling=True</code> in Config (or set <code class="u-mono u-text-sm">FLOWSURGEON_PROFILING=1</code>) to capture call-stack data.
   {% else %}
-  No user-code frames were captured — try setting <code style="font-family:monospace; font-size:12px;">profile_user_code_only=False</code> to include stdlib frames.
+  No user-code frames were captured — try setting <code class="u-mono u-text-sm">profile_user_code_only=False</code> to include stdlib frames.
   {% endif %}
 </div>
 {% endif %}

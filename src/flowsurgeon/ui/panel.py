@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import importlib.resources
+import logging
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -137,6 +141,7 @@ def discover_routes(app: Any) -> list[tuple[str, str]]:
                 for m in sorted(methods):
                     if m.upper() not in ("HEAD", "OPTIONS"):
                         result.append((m.upper(), path))
+        _log.debug("FlowSurgeon: discovered %d routes via app.routes", len(result))
         return result
 
     # Flask app passed directly: app.url_map
@@ -149,7 +154,8 @@ def discover_routes(app: Any) -> list[tuple[str, str]]:
                         if m.upper() not in ("HEAD", "OPTIONS"):
                             result.append((m.upper(), rule.rule))
         except Exception:
-            pass
+            _log.exception("FlowSurgeon: error discovering routes from Flask url_map")
+        _log.debug("FlowSurgeon: discovered %d routes via url_map", len(result))
         return result
 
     # Try common wrapper patterns: .app / .application / bound method __self__
@@ -160,6 +166,7 @@ def discover_routes(app: Any) -> list[tuple[str, str]]:
             if found:
                 return found
 
+    _log.debug("FlowSurgeon: no routes discovered for %s", type(app).__name__)
     return []
 
 
@@ -243,6 +250,48 @@ def _build_endpoint_summaries(
     return summaries
 
 
+def _group_by_prefix(summaries: list[dict]) -> dict[str, list[dict]]:
+    """Group route summary dicts by first path segment.
+
+    Paths like '/' or empty strings become group 'root'.
+    Returns dict preserving insertion order.
+    """
+    groups: dict[str, list[dict]] = {}
+    for summary in summaries:
+        path = summary.get("path", "")
+        # Split on '/' and take first non-empty part
+        parts = [p for p in path.split("/") if p]
+        prefix = parts[0] if parts else "root"
+        if prefix not in groups:
+            groups[prefix] = []
+        groups[prefix].append(summary)
+    return groups
+
+
+def _relative_time(ts_str: str | None) -> str:
+    """Convert a timestamp string to a relative time string like '5m ago'.
+
+    Returns an em dash if ts_str is None or empty.
+    """
+    if not ts_str:
+        return "\u2014"
+    try:
+        dt = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        delta = (datetime.now(timezone.utc) - dt).total_seconds()
+        if delta < 60:
+            return f"{int(delta)}s ago"
+        if delta < 3600:
+            return f"{int(delta // 60)}m ago"
+        if delta < 86400:
+            return f"{int(delta // 3600)}h ago"
+        return f"{int(delta // 86400)}d ago"
+    except (ValueError, OSError):
+        return "\u2014"
+
+
+_env.filters["relative_time"] = _relative_time
+
+
 def _filter_records(
     records: list[RequestRecord],
     q: str = "",
@@ -280,21 +329,73 @@ def _paginate(items: list, page: int, page_size: int = _PAGE_SIZE) -> tuple[list
 
 
 def render_panel(record: RequestRecord, debug_route: str, slow_threshold: float = 100.0) -> str:
-    """Return the HTML fragment for the inline debug panel."""
+    """Return the HTML fragment for the injected debug button."""
     css = _load_asset("panel.css")
-    js = _load_asset("panel.js")
-    sql_counts: Counter[str] = Counter(q.sql for q in record.queries)
-    sql_total_ms = sum(q.duration_ms for q in record.queries)
     tmpl = _env.get_template("panel.html")
     return tmpl.render(
         record=record,
         debug_route=debug_route,
         css=css,
-        js=js,
         status_class=_status_class(record.status_code),
-        sql_total_ms=sql_total_ms,
-        sql_counts=sql_counts,
-        slow_threshold=slow_threshold,
+    )
+
+
+def render_routes_page(
+    records: list[RequestRecord],
+    debug_route: str,
+    app_routes: list[tuple[str, str]] | None = None,
+    method_filter: str = "",
+    sort: str = "duration",
+) -> str:
+    """Return the full HTML home page (Swagger-style grouped routes list)."""
+    summaries = _build_endpoint_summaries(
+        records, app_routes or [], method_filter=method_filter, sort=sort
+    )
+    groups = _group_by_prefix(summaries)
+    tmpl = _env.get_template("home.html")
+    return tmpl.render(
+        groups=groups,
+        debug_route=debug_route,
+        method_filter=method_filter,
+        sort=sort,
+        total_routes=len(summaries),
+    )
+
+
+def render_route_detail_page(
+    records: list[RequestRecord],
+    debug_route: str,
+    route_method: str,
+    route_path: str,
+    status: str = "",
+    sort: str = "recent",
+    page: int = 1,
+    show: int = 25,
+) -> str:
+    """Return the filtered request list for a specific route."""
+    filtered = _filter_records(records, method=route_method, path=route_path, status=status)
+
+    # Sort
+    if sort == "duration":
+        filtered = sorted(filtered, key=lambda r: r.duration_ms, reverse=True)
+    elif sort == "status":
+        filtered = sorted(filtered, key=lambda r: r.status_code)
+    else:  # "recent" (default) -- most recent first
+        filtered = sorted(filtered, key=lambda r: r.timestamp, reverse=True)
+
+    page_items, total_pages, page = _paginate(filtered, page, show)
+    tmpl = _env.get_template("route_detail.html")
+    return tmpl.render(
+        records=page_items,
+        total_records=len(filtered),
+        route_method=route_method,
+        route_path=route_path,
+        debug_route=debug_route,
+        status=status,
+        sort=sort,
+        page=page,
+        total_pages=total_pages,
+        show=show,
     )
 
 
@@ -315,7 +416,7 @@ def render_history_page(
     # whether profiling is enabled (shown in the Profiling tab empty state)
     profiling_enabled: bool = False,
 ) -> str:
-    """Return the full HTML home page (Requests grid view)."""
+    """Deprecated: Use render_routes_page() instead."""
     tmpl = _env.get_template("home.html")
 
     # Always compute latency data so both tab panels have records available

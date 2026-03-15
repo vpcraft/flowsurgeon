@@ -5,14 +5,19 @@ import os
 import time
 from typing import Callable, Iterable
 
+import logging
+
 from flowsurgeon._http import (
     _HTML_CONTENT_TYPES,
     _MIME_TYPES,
+    _TEXT_CONTENT_TYPES,
     _decode_body,
     _parse_qs_int,
     _parse_qs_param,
     _strip_ipv6_zone,
 )
+
+_log = logging.getLogger(__name__)
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.profiling import _parse_profile
@@ -24,8 +29,9 @@ from flowsurgeon.ui.panel import (
     _load_asset_bytes,
     discover_routes,
     render_detail_page,
-    render_history_page,
     render_panel,
+    render_route_detail_page,
+    render_routes_page,
 )
 
 # WSGI type aliases
@@ -138,23 +144,34 @@ class FlowSurgeonWSGI:
     def _serve_history(
         self, environ: Environ, start_response: StartResponse, query_string: str = ""
     ) -> Iterable[bytes]:
-        view = _parse_qs_param(query_string, "view", "latency")
-        q = _parse_qs_param(query_string, "q", "")
-        order = _parse_qs_param(query_string, "order", "queries")
-        show = _parse_qs_int(query_string, "show", 25)
-        page = _parse_qs_int(query_string, "page", 1)
+        method_param = _parse_qs_param(query_string, "method", "")
+        path_param = _parse_qs_param(query_string, "path", "")
 
-        records = self._storage.list_recent(limit=500)
-        body = render_history_page(
-            records,
-            self._config.debug_route,
-            view=view,
-            q=q,
-            order=order,
-            show=show,
-            page=page,
-            profiling_enabled=self._config.enable_profiling,
-        ).encode()
+        if method_param and path_param:
+            # Route detail view
+            status = _parse_qs_param(query_string, "status", "")
+            sort = _parse_qs_param(query_string, "sort", "recent")
+            page = _parse_qs_int(query_string, "page", 1)
+            show = _parse_qs_int(query_string, "show", 25)
+            records = self._storage.list_recent(limit=500)
+            body = render_route_detail_page(
+                records, self._config.debug_route,
+                route_method=method_param.upper(),
+                route_path=path_param,
+                status=status, sort=sort, page=page, show=show,
+            ).encode()
+        else:
+            # Routes home view
+            method_filter = _parse_qs_param(query_string, "method", "")
+            sort = _parse_qs_param(query_string, "sort", "duration")
+            records = self._storage.list_recent(limit=500)
+            body = render_routes_page(
+                records,
+                self._config.debug_route,
+                app_routes=self._app_routes,
+                method_filter=method_filter,
+                sort=sort,
+            ).encode()
         start_response(
             "200 OK",
             [
@@ -223,8 +240,6 @@ class FlowSurgeonWSGI:
 
         def capturing_start_response(status: str, headers: list[tuple[str, str]]) -> None:
             response_started.append((status, headers))
-            # Do NOT call the real start_response yet — we may need to
-            # modify Content-Length after panel injection.
 
         queries, token = (
             begin_query_collection()
@@ -235,36 +250,81 @@ class FlowSurgeonWSGI:
         if self._config.enable_profiling:
             prof = cProfile.Profile()
             prof.enable()
+
+        t0 = time.perf_counter()
+        app_iter = iter(self._app(environ, capturing_start_response))
+
+        # Pull the first chunk to trigger start_response.
         try:
-            t0 = time.perf_counter()
-            chunks = list(self._app(environ, capturing_start_response))
-            duration_ms = (time.perf_counter() - t0) * 1000
-        finally:
-            if prof is not None:
-                prof.disable()
-                record.profile_stats = _parse_profile(prof, self._config)
-            if token is not None:
-                end_query_collection(token)
+            first_chunk = next(app_iter)
+        except StopIteration:
+            first_chunk = b""
 
         if not response_started:
             # Degenerate app that never called start_response
-            return chunks
+            if prof is not None:
+                prof.disable()
+            if token is not None:
+                end_query_collection(token)
+            return [first_chunk] if first_chunk else []
 
         status_str, resp_headers = response_started[0]
         status_code = int(status_str.split(" ", 1)[0])
-
-        resp_headers_dict = _headers_to_dict(resp_headers, self._config.strip_sensitive_headers)
-
         content_type = _get_header(resp_headers, "content-type") or ""
-        body = b"".join(chunks)
+        is_text = any(t in content_type for t in _TEXT_CONTENT_TYPES)
+
+        if not is_text:
+            # --- Binary response: stream through without buffering ---
+            start_response(status_str, resp_headers)
+            storage = self._storage
+            config = self._config
+
+            def _stream() -> Iterable[bytes]:
+                try:
+                    if first_chunk:
+                        yield first_chunk
+                    for chunk in app_iter:
+                        yield chunk
+                finally:
+                    duration_ms = (time.perf_counter() - t0) * 1000
+                    if prof is not None:
+                        prof.disable()
+                        record.profile_stats = _parse_profile(prof, config)
+                    if token is not None:
+                        end_query_collection(token)
+                    record.status_code = status_code
+                    record.duration_ms = duration_ms
+                    record.response_headers = _headers_to_dict(
+                        resp_headers, config.strip_sensitive_headers
+                    )
+                    record.queries = queries
+                    record.response_body = None
+                    storage.save(record)
+                    storage.prune(config.max_stored_requests)
+
+            return _stream()
+
+        # --- Text response: buffer for storage / panel injection ---
+        remaining = list(app_iter)
+        duration_ms = (time.perf_counter() - t0) * 1000
+        if prof is not None:
+            prof.disable()
+            record.profile_stats = _parse_profile(prof, self._config)
+        if token is not None:
+            end_query_collection(token)
+
+        body = b"".join([first_chunk] + remaining)
+        resp_headers_dict = _headers_to_dict(resp_headers, self._config.strip_sensitive_headers)
 
         record.status_code = status_code
         record.duration_ms = duration_ms
         record.response_headers = resp_headers_dict
         record.queries = queries
-        record.response_body = _decode_body(body, content_type)
+        if self._config.capture_response_body:
+            record.response_body = _decode_body(body, content_type)
+        else:
+            record.response_body = None
 
-        # Persist
         self._storage.save(record)
         self._storage.prune(self._config.max_stored_requests)
 
@@ -279,14 +339,11 @@ class FlowSurgeonWSGI:
                 body = body.replace(b"</body>", panel_html + b"</body>", 1)
             else:
                 body = body + panel_html
-            chunks = [body]
             resp_headers = [(k, v) for k, v in resp_headers if k.lower() != "content-length"]
             resp_headers.append(("Content-Length", str(len(body))))
-        else:
-            chunks = [body]
 
         start_response(status_str, resp_headers)
-        return chunks
+        return [body]
 
     # ------------------------------------------------------------------
     # Helpers
@@ -335,5 +392,3 @@ def _get_header(headers: list[tuple[str, str]], name: str) -> str | None:
         if k.lower() == lower:
             return v
     return None
-
-

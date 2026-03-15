@@ -153,6 +153,71 @@ class TestDebugRoutes:
         assert record.request_id.encode() in body
 
 
+class TestRouteDetail:
+    def test_routes_home_wsgi(self, tmp_path):
+        """WSGI home page returns route list HTML."""
+        cfg = Config(
+            enabled=True,
+            db_path=str(tmp_path / "test.db"),
+            allowed_hosts=["127.0.0.1"],
+            known_routes=[("GET", "/api/users")],
+        )
+        app = FlowSurgeonWSGI(_json_app, config=cfg)
+        status, _, body = _call_app(app, _make_environ(path="/flowsurgeon"))
+        assert status == "200 OK"
+        assert b"FlowSurgeon" in body
+        assert b"/api/users" in body
+
+    def test_route_detail_wsgi(self, tmp_path):
+        """WSGI route detail page with method+path params returns filtered list."""
+        cfg = _enabled_config(tmp_path)
+        storage = SQLiteBackend(cfg.db_path)
+        app = FlowSurgeonWSGI(_json_app, config=cfg, storage=storage)
+
+        # Record a request for /api/users
+        _call_app(app, _make_environ(path="/api/users"))
+        records = storage.list_recent()
+        users_id = records[0].request_id
+
+        status, _, body = _call_app(
+            app,
+            _make_environ(path="/flowsurgeon", qs="method=GET&path=/api/users"),
+        )
+        assert status == "200 OK"
+        assert b"breadcrumb" in body
+        assert b"FlowSurgeon" in body
+        assert b"/api/users" in body
+        assert users_id[:8].encode() in body
+
+    def test_route_detail_breadcrumb_wsgi(self, tmp_path):
+        """WSGI route detail breadcrumb contains method and path."""
+        cfg = _enabled_config(tmp_path)
+        app = FlowSurgeonWSGI(_json_app, config=cfg)
+        status, _, body = _call_app(
+            app, _make_environ(path="/flowsurgeon", qs="method=GET&path=/api/items")
+        )
+        assert status == "200 OK"
+        assert b"m-GET" in body
+        assert b"/api/items" in body
+
+    def test_detail_page_has_profile_tab_wsgi(self, tmp_path):
+        """WSGI detail page has all 4 tabs including Profile."""
+        cfg = _enabled_config(tmp_path)
+        storage = SQLiteBackend(cfg.db_path)
+        app = FlowSurgeonWSGI(_json_app, config=cfg, storage=storage)
+        _call_app(app, _make_environ(path="/api/items"))
+        record = storage.list_recent()[0]
+
+        status, _, body = _call_app(
+            app, _make_environ(path=f"/flowsurgeon/{record.request_id}")
+        )
+        assert status == "200 OK"
+        assert b"Details" in body
+        assert b"SQL" in body
+        assert b"Traceback" in body
+        assert b"Profile" in body
+
+
 class TestPruning:
     def test_prune_keeps_max_records(self, tmp_path):
         cfg = Config(

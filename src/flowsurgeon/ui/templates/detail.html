@@ -8,10 +8,13 @@
 <nav class="topbar">
   <span class="logo">FlowSurgeon</span>
   <div class="breadcrumb">
-    <a class="b-dim" href="{{ debug_route }}">Requests</a>
-    <span class="sep">›</span>
-    <span class="b-mid">{{ record.path }}</span>
-    <span class="sep">›</span>
+    <a class="b-dim" href="{{ debug_route }}">FlowSurgeon</a>
+    <span class="sep">&rsaquo;</span>
+    <a class="b-mid" href="{{ debug_route }}?method={{ record.method }}&amp;path={{ record.path | urlencode }}">
+      <span class="method {{ record.method | method_class }}">{{ record.method }}</span>
+      <span class="u-mono u-text-sm">{{ record.path }}</span>
+    </a>
+    <span class="sep">&rsaquo;</span>
     <span class="b-cur">{{ record.request_id[:8] }}</span>
   </div>
 </nav>
@@ -60,7 +63,7 @@
     <div class="card">
       <span class="card-label">STATUS</span>
       <div>
-        <span class="card-badge {{ record.status_code | status_class }}" style="margin-top:4px">
+        <span class="card-badge {{ record.status_code | status_class }} card-badge-mt">
           <span>{{ record.status_code }} {{ record.status_code | status_text }}</span>
         </span>
       </div>
@@ -104,7 +107,7 @@
             {% for k, v in record.request_headers.items() %}
             <span class="code-line">{{ k }}: {{ v }}</span>
             {% else %}
-            <span class="code-line" style="color:#4B5563">—</span>
+            <span class="code-line code-line-faint">—</span>
             {% endfor %}
           </div>
         </div>
@@ -121,7 +124,7 @@
         <div class="psep"></div>
         <div class="field">
           <span class="field-lbl">Request ID</span>
-          <span class="field-val" style="font-family:monospace;font-size:12px">{{ record.request_id }}</span>
+          <span class="field-val field-val-mono">{{ record.request_id }}</span>
         </div>
       </div>
     </div>
@@ -145,7 +148,7 @@
             {% for k, v in record.response_headers.items() %}
             <span class="code-line">{{ k }}: {{ v }}</span>
             {% else %}
-            <span class="code-line" style="color:#4B5563">—</span>
+            <span class="code-line code-line-faint">—</span>
             {% endfor %}
           </div>
         </div>
@@ -153,11 +156,11 @@
         <div class="field">
           <span class="field-lbl">Body</span>
           {% if record.response_body %}
-          <div class="code-block" style="max-height:300px; overflow-y:auto;">
+          <div class="code-block code-block-scroll">
             <span class="code-line">{{ record.response_body }}</span>
           </div>
           {% else %}
-          <span class="field-val" style="color:#4B5563">— (binary or not captured)</span>
+          <span class="field-val u-faint">— (binary or not captured)</span>
           {% endif %}
         </div>
       </div>

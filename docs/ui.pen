@@ -176,6 +176,9 @@
                       },
                       "effect": [],
                       "cornerRadius": 6,
+                      "width": "fit_content",
+                      "x": 0,
+                      "y": 0,
                       "descendants": {
                         "b:z2WJL": {
                           "content": "Latency & Queries",
@@ -194,6 +197,9 @@
                       },
                       "effect": [],
                       "cornerRadius": 6,
+                      "width": "fit_content",
+                      "x": 139,
+                      "y": 0,
                       "descendants": {
                         "b:z2WJL": {
                           "content": "Profiling",
@@ -227,6 +233,8 @@
                         "b:Mode": "Dark"
                       },
                       "width": 240,
+                      "x": 42,
+                      "y": 0,
                       "descendants": {
                         "b:TJYFY": {
                           "fill": "#131720",
@@ -234,10 +242,12 @@
                             "align": "inside",
                             "thickness": 1,
                             "fill": "#2D3748"
-                          }
+                          },
+                          "width": "fill_container"
                         },
                         "b:QEFFJ": {
-                          "content": "Filter by path…"
+                          "content": "Filter by path…",
+                          "width": "fill_container"
                         }
                       }
                     },
@@ -265,6 +275,9 @@
                             "b:Mode": "Dark"
                           },
                           "width": 70,
+                          "height": "fit_content",
+                          "x": 44,
+                          "y": 0,
                           "descendants": {
                             "b:AETRu": {
                               "fill": "#131720",
@@ -273,7 +286,8 @@
                                 "thickness": 1,
                                 "fill": "#2D3748"
                               },
-                              "height": 36
+                              "height": 36,
+                              "width": "fill_container"
                             },
                             "b:7Thbt": {
                               "content": "25",
@@ -283,6 +297,10 @@
                               "height": 40,
                               "x": 16,
                               "y": 8
+                            },
+                            "b:QUTg2": {
+                              "x": 38,
+                              "y": 10
                             }
                           }
                         }
@@ -312,6 +330,9 @@
                             "b:Mode": "Dark"
                           },
                           "width": 166,
+                          "height": "fit_content",
+                          "x": 44,
+                          "y": 0,
                           "descendants": {
                             "b:AETRu": {
                               "fill": "#131720",
@@ -320,10 +341,17 @@
                                 "thickness": 1,
                                 "fill": "#2D3748"
                               },
-                              "height": 36
+                              "height": 36,
+                              "width": "fill_container"
                             },
                             "b:7Thbt": {
-                              "content": "Num. Queries"
+                              "content": "Num. Queries",
+                              "width": "fill_container",
+                              "y": 8
+                            },
+                            "b:QUTg2": {
+                              "x": 134,
+                              "y": 10
                             }
                           }
                         }
@@ -1764,7 +1792,9 @@
                   "theme": {
                     "b:Mode": "Dark"
                   },
-                  "name": "pgH"
+                  "name": "pgH",
+                  "x": 1147,
+                  "y": 0
                 }
               ]
             }
@@ -1879,6 +1909,9 @@
                 "b:Mode": "Dark"
               },
               "name": "tabDetN",
+              "width": "fit_content",
+              "x": 48,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "Details",
@@ -1898,6 +1931,9 @@
                 "thickness": 0
               },
               "name": "tabSQLN",
+              "width": "fit_content",
+              "x": 115,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "SQL",
@@ -1917,6 +1953,9 @@
                 "thickness": 0
               },
               "name": "tabTraceN",
+              "width": "fit_content",
+              "x": 165,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "Traceback",
@@ -2751,6 +2790,9 @@
                 "thickness": 0
               },
               "name": "tabDetS",
+              "width": "fit_content",
+              "x": 48,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "Details",
@@ -2776,6 +2818,9 @@
                 "b:Mode": "Dark"
               },
               "name": "tabSQLS",
+              "width": "fit_content",
+              "x": 115,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "SQL",
@@ -2795,6 +2840,9 @@
                 "thickness": 0
               },
               "name": "tabTraceS",
+              "width": "fit_content",
+              "x": 165,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "Traceback",
@@ -3559,6 +3607,9 @@
                 "thickness": 0
               },
               "name": "tabDetT",
+              "width": "fit_content",
+              "x": 48,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "Details",
@@ -3578,6 +3629,9 @@
                 "thickness": 0
               },
               "name": "tabSQLT",
+              "width": "fit_content",
+              "x": 115,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "SQL",
@@ -3603,6 +3657,9 @@
                 "b:Mode": "Dark"
               },
               "name": "tabTraceT",
+              "width": "fit_content",
+              "x": 165,
+              "y": 8,
               "descendants": {
                 "b:z2WJL": {
                   "content": "Traceback",
@@ -4086,6 +4143,9 @@
                         "thickness": 0
                       },
                       "name": "tabLat",
+                      "width": "fit_content",
+                      "x": 0,
+                      "y": 0,
                       "descendants": {
                         "b:z2WJL": {
                           "content": "Latency & Queries",
@@ -4111,6 +4171,9 @@
                         "b:Mode": "Dark"
                       },
                       "name": "tabProf",
+                      "width": "fit_content",
+                      "x": 139,
+                      "y": 0,
                       "descendants": {
                         "b:z2WJL": {
                           "content": "Profiling",
@@ -4153,6 +4216,9 @@
                           },
                           "width": 70,
                           "name": "showSel",
+                          "height": "fit_content",
+                          "x": 44,
+                          "y": 0,
                           "descendants": {
                             "b:AETRu": {
                               "fill": "#131720",
@@ -4161,7 +4227,8 @@
                                 "align": "inside",
                                 "thickness": 1,
                                 "fill": "#2D3748"
-                              }
+                              },
+                              "width": "fill_container"
                             },
                             "b:7Thbt": {
                               "content": "25",
@@ -4171,6 +4238,10 @@
                               "height": 40,
                               "x": 16,
                               "y": 8
+                            },
+                            "b:QUTg2": {
+                              "x": 38,
+                              "y": 10
                             }
                           }
                         }
@@ -4202,6 +4273,9 @@
                           },
                           "width": 150,
                           "name": "orderSel",
+                          "height": "fit_content",
+                          "x": 44,
+                          "y": 0,
                           "descendants": {
                             "b:AETRu": {
                               "fill": "#131720",
@@ -4210,10 +4284,17 @@
                                 "align": "inside",
                                 "thickness": 1,
                                 "fill": "#2D3748"
-                              }
+                              },
+                              "width": "fill_container"
                             },
                             "b:7Thbt": {
-                              "content": "Total ms"
+                              "content": "Total ms",
+                              "width": "fill_container",
+                              "y": 8
+                            },
+                            "b:QUTg2": {
+                              "x": 118,
+                              "y": 10
                             }
                           }
                         }
@@ -5178,7 +5259,9 @@
                   "theme": {
                     "b:Mode": "Dark"
                   },
-                  "name": "pgP"
+                  "name": "pgP",
+                  "x": 1147,
+                  "y": 0
                 }
               ]
             }
@@ -5249,6 +5332,7 @@
     }
   ],
   "imports": {
-    "b": "pencil:nitro.lib.pen"
+    "b": "pencil:nitro.lib.pen",
+    "l": "pencil:shadcn.lib.pen"
   }
 }

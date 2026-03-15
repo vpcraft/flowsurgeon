@@ -45,6 +45,9 @@ pip install flowsurgeon
 
 Requires Python 3.12+. The only runtime dependency is `jinja2`.
 
+> [!WARNING]
+> FlowSurgeon is a development tool. Do not enable in production. See [Security](#security) for details.
+
 ## Quick start
 
 ### FastAPI / Starlette (ASGI)
@@ -87,6 +90,89 @@ app.wsgi_app = FlowSurgeon(
 ```bash
 flask run
 # Debug UI → http://127.0.0.1:5000/flowsurgeon
+```
+
+## Security
+
+FlowSurgeon is designed for local development — these settings keep it safe and contained.
+
+### Kill Switch
+
+The middleware is a no-op unless explicitly enabled, so it is safe to ship in your codebase. Enable it per-environment via an env var or your settings layer.
+
+```bash
+# Enable without modifying code
+FLOWSURGEON_ENABLED=1 uvicorn myapp:app
+```
+
+```python
+from flowsurgeon import Config
+
+# Or enable in code
+Config(enabled=True)
+```
+
+### Allowed Hosts
+
+Only requests from listed IPs can access the debug panel. By default this is restricted to localhost addresses.
+
+```python
+from flowsurgeon import Config
+
+Config(
+    # Defaults — loopback only
+    allowed_hosts=["127.0.0.1", "::1", "localhost"],
+)
+```
+
+To allow an additional machine on your local network:
+
+```python
+from flowsurgeon import Config
+
+Config(
+    allowed_hosts=["127.0.0.1", "::1", "localhost", "192.168.1.50"],
+)
+```
+
+### Header Redaction
+
+Sensitive header values are replaced with `[redacted]` before being stored in the database. The default list covers the most common credential-bearing headers.
+
+```python
+from flowsurgeon import Config
+
+Config(
+    # Defaults — authorization, session cookies redacted
+    strip_sensitive_headers=["authorization", "cookie", "set-cookie"],
+)
+```
+
+To redact an additional header:
+
+```python
+from flowsurgeon import Config
+
+Config(
+    strip_sensitive_headers=["authorization", "cookie", "set-cookie", "x-api-key"],
+)
+```
+
+### Database File
+
+FlowSurgeon writes request data to a local SQLite file (`flowsurgeon.db` by default). Add it to your project's `.gitignore` so it is never committed.
+
+```text
+# .gitignore
+flowsurgeon.db
+```
+
+To store the database elsewhere:
+
+```python
+from flowsurgeon import Config
+
+Config(db_path="/tmp/flowsurgeon.db")
 ```
 
 ## SQL query tracking
@@ -239,12 +325,7 @@ Both demos expose these routes:
 
 ## Environment variable
 
-```bash
-# Enable without modifying code
-FLOWSURGEON_ENABLED=1 uvicorn myapp:app
-```
-
-Keep `enabled=False` (the default) so the middleware is a no-op in production, and flip it on per-environment via the env var or your settings layer.
+See [Security](#security) for the `FLOWSURGEON_ENABLED` kill switch and other security settings.
 
 ## License
 
