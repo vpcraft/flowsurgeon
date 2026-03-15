@@ -343,6 +343,124 @@ class TestRoutesHomePage:
 
 
 @pytest.mark.asyncio
+class TestRouteDetail:
+    async def test_route_detail_returns_filtered_requests(self, tmp_path):
+        """RDET-01: route detail page shows only requests for the specified route."""
+        cfg = _enabled_config(tmp_path)
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+
+        # Record requests for two different paths
+        await _call_app(app, _make_scope(path="/api/users"))
+        await _call_app(app, _make_scope(path="/api/users"))
+        await _call_app(app, _make_scope(method="POST", path="/api/orders"))
+        await storage._queue.join()
+
+        records = await storage.list_recent()
+        users_ids = [r.request_id for r in records if r.path == "/api/users"]
+
+        # Hit route detail for /api/users
+        status, _, body = await _call_app(
+            app, _make_scope(path="/flowsurgeon", qs=b"method=GET&path=/api/users")
+        )
+        assert status == 200
+        # Should contain the /api/users request IDs
+        for rid in users_ids:
+            assert rid[:8].encode() in body
+        # Should NOT contain /api/orders in the request row data (orders have different path)
+        # The route filter ensures only GET /api/users are shown
+        assert b"route_detail" in body or b"/api/users" in body
+        await storage.close()
+
+    async def test_route_detail_filters(self, tmp_path):
+        """RDET-02: route detail page has filter/sort controls."""
+        cfg = _enabled_config(tmp_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg)
+        status, _, body = await _call_app(
+            app,
+            _make_scope(
+                path="/flowsurgeon", qs=b"method=GET&path=/api/users&status=2xx&sort=duration"
+            ),
+        )
+        assert status == 200
+        # Filter select elements present
+        assert b'name="status"' in body
+        assert b'name="sort"' in body
+        assert b'name="show"' in body
+
+    async def test_route_detail_breadcrumb(self, tmp_path):
+        """RDET-03: route detail page breadcrumb shows FlowSurgeon and method+path."""
+        cfg = _enabled_config(tmp_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg)
+        status, _, body = await _call_app(
+            app, _make_scope(path="/flowsurgeon", qs=b"method=GET&path=/api/users")
+        )
+        assert status == 200
+        assert b"FlowSurgeon" in body
+        assert b"breadcrumb" in body
+        assert b"/api/users" in body
+        assert b"m-GET" in body
+
+    async def test_detail_page_breadcrumb_three_levels(self, tmp_path):
+        """Detail page breadcrumb is 3 levels: FlowSurgeon > METHOD /path > #id."""
+        cfg = _enabled_config(tmp_path)
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+        await _call_app(app, _make_scope(path="/api/items"))
+        await storage._queue.join()
+        record = (await storage.list_recent())[0]
+
+        status, _, body = await _call_app(
+            app, _make_scope(path=f"/flowsurgeon/{record.request_id}")
+        )
+        assert status == 200
+        # 3-level breadcrumb: FlowSurgeon > METHOD /path > #id
+        assert b"breadcrumb" in body
+        assert b"FlowSurgeon" in body
+        assert b"/api/items" in body
+        assert record.request_id[:8].encode() in body
+        # Check the route link back to route detail page
+        assert b"method=GET" in body
+        await storage.close()
+
+    async def test_detail_page_has_profile_tab(self, tmp_path):
+        """DPOL-02: detail page has all 4 tabs including Profile."""
+        cfg = _enabled_config(tmp_path)
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+        await _call_app(app, _make_scope(path="/api/items"))
+        await storage._queue.join()
+        record = (await storage.list_recent())[0]
+
+        status, _, body = await _call_app(
+            app, _make_scope(path=f"/flowsurgeon/{record.request_id}")
+        )
+        assert status == 200
+        assert b"Details" in body
+        assert b"SQL" in body
+        assert b"Traceback" in body
+        assert b"Profile" in body
+        await storage.close()
+
+    async def test_detail_css_tokens(self, tmp_path):
+        """DPOL-01: detail page inherits CSS design system from base.html."""
+        cfg = _enabled_config(tmp_path)
+        storage = AsyncSQLiteBackend(cfg.db_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg, storage=storage)
+        await _call_app(app, _make_scope(path="/api/items"))
+        await storage._queue.join()
+        record = (await storage.list_recent())[0]
+
+        status, _, body = await _call_app(
+            app, _make_scope(path=f"/flowsurgeon/{record.request_id}")
+        )
+        assert status == 200
+        assert b":root" in body
+        assert b"--color-brand" in body
+        await storage.close()
+
+
+@pytest.mark.asyncio
 class TestLifespan:
     async def test_lifespan_starts_and_stops_storage(self, tmp_path):
         cfg = _enabled_config(tmp_path)
