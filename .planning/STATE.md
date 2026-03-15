@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-routes-pages/02-01-PLAN.md
-last_updated: "2026-03-15T18:13:13.027Z"
+stopped_at: Completed 02-routes-pages/02-02-PLAN.md
+last_updated: "2026-03-15T18:19:28.616Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-css-design-system P01 | 45min | 2 tasks | 2 files |
 | Phase 01-css-design-system P02 | 45min | 2 tasks | 6 files |
 | Phase 02-routes-pages P01 | 4min | 2 tasks | 6 files |
+| Phase 02-routes-pages P02 | 3min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 01-css-design-system]: Latency & Queries, Profiling, and Profile tabs removed from home/detail pages; list view is sole view on home
 - [Phase 02-routes-pages]: render_routes_page() replaces render_history_page() for home page; old function kept with deprecation notice for compat
 - [Phase 02-routes-pages]: Method filter implemented via Alpine.js x-show on individual route rows (not group level) per plan pitfall note
+- [Phase 02-routes-pages]: Route detail uses query params not nested paths to avoid collision with request_id routing
+- [Phase 02-routes-pages]: Profile tab re-added to detail.html; detail_profile.html partial was already clean from Phase 1
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T18:13:13.023Z
-Stopped at: Completed 02-routes-pages/02-01-PLAN.md
+Last session: 2026-03-15T18:19:28.612Z
+Stopped at: Completed 02-routes-pages/02-02-PLAN.md
 Resume file: None

@@ -7,7 +7,7 @@ v0.6.0 is a polish-and-launch milestone on top of a working v0.5.0 codebase. The
 ## Phases
 
 - [x] **Phase 1: CSS Design System** - Refactor UI to shadcn-inspired CSS custom properties with Swagger-convention method badges (completed 2026-03-14)
-- [ ] **Phase 2: Routes Pages** - Build routes home page and route detail page, polish detail tabs
+- [x] **Phase 2: Routes Pages** - Build routes home page and route detail page, polish detail tabs (completed 2026-03-15)
 - [ ] **Phase 3: Security Documentation** - Write security and production-warning docs
 - [ ] **Phase 4: Announcement Assets** - Produce screenshots, demo GIF, and README for public launch
 
@@ -38,7 +38,7 @@ Plans:
   3. Routes can be sorted or grouped by HTTP method
   4. Clicking a route navigates to a filtered view showing only requests for that endpoint, with method + path in the breadcrumb
   5. The filtered route view includes status, duration, and date controls; all 4 request detail tabs (Details, SQL, Traceback, Profile) are visually consistent with the design system
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 02-01-PLAN.md — Routes home page: render_routes_page(), grouped layout, method filter pills, muted no-traffic rows
 - [ ] 02-02-PLAN.md — Route detail page, middleware wiring, detail.html breadcrumb + Profile tab, integration tests
@@ -67,6 +67,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. CSS Design System | 2/2 | Complete   | 2026-03-14 |
-| 2. Routes Pages | 1/2 | In Progress|  |
+| 2. Routes Pages | 2/2 | Complete   | 2026-03-15 |
 | 3. Security Documentation | 0/TBD | Not started | - |
 | 4. Announcement Assets | 0/TBD | Not started | - |

@@ -25,14 +25,14 @@ Requirements for v0.6.0 release. Each maps to roadmap phases.
 
 ### Route Detail Page
 
-- [ ] **RDET-01**: Clicking a route navigates to filtered view showing only requests for that endpoint
-- [ ] **RDET-02**: Route detail shows filtering and sorting controls (status, duration, date)
-- [ ] **RDET-03**: Route breadcrumb shows method + path context
+- [x] **RDET-01**: Clicking a route navigates to filtered view showing only requests for that endpoint
+- [x] **RDET-02**: Route detail shows filtering and sorting controls (status, duration, date)
+- [x] **RDET-03**: Route breadcrumb shows method + path context
 
 ### Detail Page Polish
 
-- [ ] **DPOL-01**: Request detail page inherits new CSS design system
-- [ ] **DPOL-02**: All 4 tabs (Details, SQL, Traceback, Profile) visually consistent with new design
+- [x] **DPOL-01**: Request detail page inherits new CSS design system
+- [x] **DPOL-02**: All 4 tabs (Details, SQL, Traceback, Profile) visually consistent with new design
 
 ### Security Documentation
 
@@ -106,11 +106,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RHOM-03 | Phase 2 | Complete |
 | RHOM-04 | Phase 2 | Complete |
 | RHOM-05 | Phase 2 | Complete |
-| RDET-01 | Phase 2 | Pending |
-| RDET-02 | Phase 2 | Pending |
-| RDET-03 | Phase 2 | Pending |
-| DPOL-01 | Phase 2 | Pending |
-| DPOL-02 | Phase 2 | Pending |
+| RDET-01 | Phase 2 | Complete |
+| RDET-02 | Phase 2 | Complete |
+| RDET-03 | Phase 2 | Complete |
+| DPOL-01 | Phase 2 | Complete |
+| DPOL-02 | Phase 2 | Complete |
 | SDOC-01 | Phase 3 | Pending |
 | SDOC-02 | Phase 3 | Pending |
 | SDOC-03 | Phase 3 | Pending |
