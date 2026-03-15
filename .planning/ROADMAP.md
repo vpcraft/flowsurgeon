@@ -51,7 +51,9 @@ Plans:
   1. Documentation covers `allowed_hosts`, header redaction behavior, and the `FLOWSURGEON_ENABLED` env var kill switch
   2. A production warning is visible in the Quick Start — "FlowSurgeon is a development tool. Do not enable in production."
   3. Docs include guidance on adding `flowsurgeon.db` to `.gitignore`
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 03-01-PLAN.md — Security section, [!WARNING] callout, and .gitignore guidance in README.md
 
 ### Phase 4: Announcement Assets
 **Goal**: The project has compelling, accurate screenshots and a demo GIF ready for a public announcement
@@ -68,5 +70,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. CSS Design System | 2/2 | Complete   | 2026-03-14 |
 | 2. Routes Pages | 2/2 | Complete   | 2026-03-15 |
-| 3. Security Documentation | 0/TBD | Not started | - |
+| 3. Security Documentation | 0/1 | Not started | - |
 | 4. Announcement Assets | 0/TBD | Not started | - |
