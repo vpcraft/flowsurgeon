@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.resources
 import logging
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 from typing import Any
 
 _log = logging.getLogger(__name__)
@@ -249,6 +250,48 @@ def _build_endpoint_summaries(
     return summaries
 
 
+def _group_by_prefix(summaries: list[dict]) -> dict[str, list[dict]]:
+    """Group route summary dicts by first path segment.
+
+    Paths like '/' or empty strings become group 'root'.
+    Returns dict preserving insertion order.
+    """
+    groups: dict[str, list[dict]] = {}
+    for summary in summaries:
+        path = summary.get("path", "")
+        # Split on '/' and take first non-empty part
+        parts = [p for p in path.split("/") if p]
+        prefix = parts[0] if parts else "root"
+        if prefix not in groups:
+            groups[prefix] = []
+        groups[prefix].append(summary)
+    return groups
+
+
+def _relative_time(ts_str: str | None) -> str:
+    """Convert a timestamp string to a relative time string like '5m ago'.
+
+    Returns an em dash if ts_str is None or empty.
+    """
+    if not ts_str:
+        return "\u2014"
+    try:
+        dt = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        delta = (datetime.now(timezone.utc) - dt).total_seconds()
+        if delta < 60:
+            return f"{int(delta)}s ago"
+        if delta < 3600:
+            return f"{int(delta // 60)}m ago"
+        if delta < 86400:
+            return f"{int(delta // 3600)}h ago"
+        return f"{int(delta // 86400)}d ago"
+    except (ValueError, OSError):
+        return "\u2014"
+
+
+_env.filters["relative_time"] = _relative_time
+
+
 def _filter_records(
     records: list[RequestRecord],
     q: str = "",
@@ -297,6 +340,28 @@ def render_panel(record: RequestRecord, debug_route: str, slow_threshold: float 
     )
 
 
+def render_routes_page(
+    records: list[RequestRecord],
+    debug_route: str,
+    app_routes: list[tuple[str, str]] | None = None,
+    method_filter: str = "",
+    sort: str = "duration",
+) -> str:
+    """Return the full HTML home page (Swagger-style grouped routes list)."""
+    summaries = _build_endpoint_summaries(
+        records, app_routes or [], method_filter=method_filter, sort=sort
+    )
+    groups = _group_by_prefix(summaries)
+    tmpl = _env.get_template("home.html")
+    return tmpl.render(
+        groups=groups,
+        debug_route=debug_route,
+        method_filter=method_filter,
+        sort=sort,
+        total_routes=len(summaries),
+    )
+
+
 def render_history_page(
     records: list[RequestRecord],
     debug_route: str,
@@ -314,7 +379,7 @@ def render_history_page(
     # whether profiling is enabled (shown in the Profiling tab empty state)
     profiling_enabled: bool = False,
 ) -> str:
-    """Return the full HTML home page (Requests grid view)."""
+    """Deprecated: Use render_routes_page() instead."""
     tmpl = _env.get_template("home.html")
 
     # Always compute latency data so both tab panels have records available

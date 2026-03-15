@@ -288,6 +288,61 @@ class TestFactoryDetection:
 
 
 @pytest.mark.asyncio
+class TestRoutesHomePage:
+    async def test_routes_home_returns_html(self, tmp_path):
+        """Visiting /flowsurgeon returns 200 and HTML containing route paths."""
+        cfg = Config(
+            enabled=True,
+            db_path=str(tmp_path / "test.db"),
+            allowed_hosts=["127.0.0.1"],
+            known_routes=[("GET", "/api/users")],
+        )
+        app = FlowSurgeonASGI(_json_app, config=cfg)
+        status, _, body = await _call_app(app, _make_scope(path="/flowsurgeon"))
+        assert status == 200
+        assert b"/api/users" in body
+        assert b"route-group" in body
+
+    async def test_route_row_shows_method_and_path(self, tmp_path):
+        """Rendered HTML contains method badge class and path text."""
+        cfg = Config(
+            enabled=True,
+            db_path=str(tmp_path / "test.db"),
+            allowed_hosts=["127.0.0.1"],
+            known_routes=[("GET", "/api/items"), ("POST", "/api/orders")],
+        )
+        app = FlowSurgeonASGI(_json_app, config=cfg)
+        status, _, body = await _call_app(app, _make_scope(path="/flowsurgeon"))
+        assert status == 200
+        assert b"m-GET" in body
+        assert b"m-POST" in body
+        assert b"/api/items" in body
+        assert b"/api/orders" in body
+
+    async def test_no_traffic_route_muted(self, tmp_path):
+        """Routes with no recorded requests have tr-no-traffic class."""
+        cfg = Config(
+            enabled=True,
+            db_path=str(tmp_path / "test.db"),
+            allowed_hosts=["127.0.0.1"],
+            known_routes=[("GET", "/api/never-called")],
+        )
+        app = FlowSurgeonASGI(_json_app, config=cfg)
+        status, _, body = await _call_app(app, _make_scope(path="/flowsurgeon"))
+        assert status == 200
+        assert b"tr-no-traffic" in body
+
+    async def test_method_filter_pills_present(self, tmp_path):
+        """HTML contains filter pill buttons for ALL, GET, POST, PUT, DELETE, PATCH."""
+        cfg = _enabled_config(tmp_path)
+        app = FlowSurgeonASGI(_json_app, config=cfg)
+        status, _, body = await _call_app(app, _make_scope(path="/flowsurgeon"))
+        assert status == 200
+        for method in [b"ALL", b"GET", b"POST", b"PUT", b"DELETE", b"PATCH"]:
+            assert method in body, f"Missing method pill: {method}"
+
+
+@pytest.mark.asyncio
 class TestLifespan:
     async def test_lifespan_starts_and_stops_storage(self, tmp_path):
         cfg = _enabled_config(tmp_path)

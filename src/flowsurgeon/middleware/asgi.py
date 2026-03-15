@@ -12,7 +12,6 @@ from flowsurgeon._http import (
     _MIME_TYPES,
     _TEXT_CONTENT_TYPES,
     _decode_body,
-    _parse_qs_int,
     _parse_qs_param,
     _strip_ipv6_zone,
 )
@@ -28,8 +27,8 @@ from flowsurgeon.ui.panel import (
     _load_asset_bytes,
     discover_routes,
     render_detail_page,
-    render_history_page,
     render_panel,
+    render_routes_page,
 )
 
 # ASGI type aliases
@@ -192,22 +191,16 @@ class FlowSurgeonASGI:
         await send({"type": "http.response.body", "body": data})
 
     async def _serve_history(self, send: Send, query_string: str = "") -> None:
-        view = _parse_qs_param(query_string, "view", "latency")
-        q = _parse_qs_param(query_string, "q", "")
-        order = _parse_qs_param(query_string, "order", "queries")
-        show = _parse_qs_int(query_string, "show", 25)
-        page = _parse_qs_int(query_string, "page", 1)
+        method_filter = _parse_qs_param(query_string, "method", "")
+        sort = _parse_qs_param(query_string, "sort", "duration")
 
         records = await self._storage.list_recent(limit=500)
-        body = render_history_page(
+        body = render_routes_page(
             records,
             self._config.debug_route,
-            view=view,
-            q=q,
-            order=order,
-            show=show,
-            page=page,
-            profiling_enabled=self._config.enable_profiling,
+            app_routes=self._app_routes,
+            method_filter=method_filter,
+            sort=sort,
         ).encode()
         await send(
             {
