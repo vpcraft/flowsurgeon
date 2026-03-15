@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}FlowSurgeon — Requests{% endblock %}
+{% block title %}FlowSurgeon — Routes{% endblock %}
 
 {% block topbar %}
 <nav class="topbar">
@@ -9,133 +9,72 @@
 {% endblock %}
 
 {% block content %}
-{# Pagination base URL #}
-{% set pb = debug_route + "?" %}
-{% if q %}{% set pb = pb + "q=" + q + "&" %}{% endif %}
-{% if order and order != "queries" %}{% set pb = pb + "order=" + order + "&" %}{% endif %}
-{% if show and show != 25 %}{% set pb = pb + "show=" + show|string + "&" %}{% endif %}
+<div class="spa-wrapper" x-data="{ methodFilter: 'ALL' }">
 
-<div class="spa-wrapper" x-data="{ layout: 'list' }">
-
-  {# ── Section header ── #}
-  <div class="section-header">
-    <div class="stat-badge">
-      <span class="dot"></span>
-      <span>{{ total_records }} request{% if total_records != 1 %}s{% endif %}</span>
-    </div>
-
-    <div class="controls-row">
-      <div class="filter-right">
-        <form method="get" action="{{ debug_route }}" class="filter-right">
-          <span class="filter-label">Path:</span>
-          <input name="q" value="{{ q }}" placeholder="Filter by path…" class="filter-input filter-input-path">
-          <span class="filter-label">Show:</span>
-          <select name="show" class="filter-select filter-input-show" onchange="this.form.submit()">
-            {% for n in [25, 50, 100] %}
-            <option value="{{ n }}" {% if show == n %}selected{% endif %}>{{ n }}</option>
-            {% endfor %}
-          </select>
-          <span class="filter-label">Order:</span>
-          <select name="order" class="filter-select filter-input-order" onchange="this.form.submit()">
-            <option value="queries" {% if order == 'queries' %}selected{% endif %}>Num. Queries</option>
-            <option value="duration" {% if order == 'duration' %}selected{% endif %}>Duration</option>
-            <option value="path" {% if order == 'path' %}selected{% endif %}>Path</option>
-          </select>
-          <button type="submit" class="filter-btn u-hidden">Apply</button>
-        </form>
-
-        {# ── Layout toggle: List / Cards ── #}
-        <div class="tab-btns tab-btns-ml">
-          <button class="tab-btn" :class="layout === 'list' ? 'tab-btn-active' : ''"
-            @click="layout = 'list'" type="button" title="List view">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-              <rect x="0" y="1" width="16" height="3" rx="1"/>
-              <rect x="0" y="6.5" width="16" height="3" rx="1"/>
-              <rect x="0" y="12" width="16" height="3" rx="1"/>
-            </svg>
-          </button>
-          <button class="tab-btn" :class="layout === 'cards' ? 'tab-btn-active' : ''"
-            @click="layout = 'cards'" type="button" title="Card view">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-              <rect x="0" y="0" width="7" height="7" rx="1"/>
-              <rect x="9" y="0" width="7" height="7" rx="1"/>
-              <rect x="0" y="9" width="7" height="7" rx="1"/>
-              <rect x="9" y="9" width="7" height="7" rx="1"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
+  {# ── Method filter pills ── #}
+  <div class="filter-pills" style="flex-shrink: 0;">
+    {% for m in ['ALL', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'] %}
+    <button
+      class="pill"
+      :class="methodFilter === '{{ m }}' ? 'pill-active' : ''"
+      @click="methodFilter = '{{ m }}'"
+      type="button"
+    >{{ m }}</button>
+    {% endfor %}
   </div>
 
-  {# ── Requests panel ── #}
-  <div class="tab-panel">
-    {% if records %}
+  {# ── Route count ── #}
+  <div style="padding: 0 var(--space-4); flex-shrink: 0;">
+    <span class="u-dim u-text-sm">{{ total_routes }} route{% if total_routes != 1 %}s{% endif %}</span>
+  </div>
 
-    {# ── List view (default) ── #}
-    <div class="table-wrap" x-show="layout === 'list'">
-      <div class="tbl-head">
-        <div class="th w-80">METHOD</div>
-        <div class="th w-fill">PATH</div>
-        <div class="th w-80">STATUS</div>
-        <div class="th w-110">DURATION</div>
-        <div class="th w-110">QUERY TIME</div>
-        <div class="th w-80">QUERIES</div>
-      </div>
-      <div class="tbl-body">
-        {% for r in records %}
-        {% set qms = namespace(val=0.0) %}
-        {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
-        <a class="tr" href="{{ debug_route }}/{{ r.request_id }}">
-          <div class="td w-80">
-            <span class="method {{ r.method | method_class }}">{{ r.method }}</span>
-          </div>
-          <div class="td w-fill td-link u-mono td-path">{{ r.path }}</div>
-          <div class="td w-80">
-            <span class="status {{ r.status_code | status_class }}">{{ r.status_code }}</span>
-          </div>
-          <div class="td w-110 {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }}ms</div>
-          <div class="td w-110 td-dim">{{ "%.0f"|format(qms.val) }}ms</div>
-          <div class="td w-80 td-dim">{{ r.queries | length }}</div>
-        </a>
-        {% endfor %}
-      </div>
-    </div>
+  {# ── Routes list ── #}
+  {% if total_routes == 0 %}
+  <div class="empty">No routes discovered.</div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="tbl-body">
+      {% for prefix, routes in groups.items() %}
 
-    {# ── Card view ── #}
-    <div class="req-grid" x-show="layout === 'cards'" x-cloak>
-      {% for r in records %}
-      {% set qms = namespace(val=0.0) %}
-      {% for qr in r.queries %}{% set qms.val = qms.val + qr.duration_ms %}{% endfor %}
-      <a class="req-card" href="{{ debug_route }}/{{ r.request_id }}">
-        <div class="req-card-top">
-          <span class="{{ r.status_code | card_status_class }}">{{ r.status_code }}</span>
-          <span class="{{ r.method | card_method_class }}">{{ r.method }}</span>
+      {# ── Group header ── #}
+      <div class="route-group-hd">{{ prefix }}</div>
+
+      {# ── Route rows ── #}
+      {% for route in routes %}
+      <a
+        class="tr {% if not route.has_data %}tr-no-traffic{% endif %}"
+        href="{{ debug_route }}?method={{ route.method }}&amp;path={{ route.path | urlencode }}"
+        x-show="methodFilter === 'ALL' || methodFilter === '{{ route.method }}'"
+      >
+        {# Left: method badge + path #}
+        <div class="td w-80">
+          <span class="method {{ route.method | method_class }}{% if not route.has_data %} method-muted{% endif %}">{{ route.method }}</span>
         </div>
-        <span class="req-path">{{ r.path }}</span>
-        <span class="req-dur {{ r.duration_ms | duration_class }}">{{ "%.0f"|format(r.duration_ms) }}ms overall</span>
-        <span class="req-qinfo">{{ "%.0f"|format(qms.val) }}ms on queries&nbsp;&middot;&nbsp;{{ r.queries | length }}
-          quer{% if r.queries | length != 1 %}ies{% else %}y{% endif %}</span>
+        <div class="td w-fill u-mono td-path">{{ route.path }}</div>
+
+        {# Right: stats or no-traffic indicator #}
+        {% if route.has_data %}
+        <div class="td-stats">
+          <div class="td w-80 td-dim">{{ route.count }} reqs</div>
+          <div class="td w-80 {{ route.latest_duration_ms | duration_class }}">{{ "%.0f"|format(route.latest_duration_ms) }}ms</div>
+          <div class="td w-80 td-dim">{{ route.latest_query_count }}q</div>
+          <div class="td w-80">
+            <span class="status {{ route.latest_status | status_class }}">{{ route.latest_status }}</span>
+          </div>
+          <div class="td w-110 td-dim">{{ route.last_request_time | relative_time }}</div>
+        </div>
+        {% else %}
+        <div class="td-stats">
+          <div class="td td-dim u-text-sm">No requests</div>
+        </div>
+        {% endif %}
       </a>
       {% endfor %}
-    </div>
 
-    {% else %}
-    <div class="empty">No requests recorded{% if q %} matching &ldquo;{{ q }}&rdquo;{% endif %}.</div>
-    {% endif %}
-
-    {% if total_pages > 1 %}
-    <div class="pagination-row">
-      <span class="page-info">Showing {{ page_start }}–{{ page_end }} of {{ total_records }} requests</span>
-      <div class="pagination">
-        {% if page > 1 %}<a class="page-btn" href="{{ pb }}page={{ page - 1 }}">← Prev</a>{% endif %}
-        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
-        {% if page < total_pages %}<a class="page-btn" href="{{ pb }}page={{ page + 1 }}">Next →</a>{% endif %}
-      </div>
+      {% endfor %}
     </div>
-    {% endif %}
   </div>
-
+  {% endif %}
 
 </div>
 {% endblock %}

@@ -1351,6 +1351,23 @@
       max-height: 300px;
       overflow-y: auto;
     }
+
+    /* ── Method filter pills ── */
+    .filter-pills { display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4); flex-wrap: wrap; }
+    .pill { padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.8125rem; font-weight: 500; transition: var(--transition-fast); }
+    .pill:hover { background: var(--bg-elevated); color: var(--text-primary); }
+    .pill-active { background: var(--color-brand); color: #fff; border-color: var(--color-brand); }
+
+    /* ── Route group header ── */
+    .route-group-hd { padding: var(--space-2) var(--space-4); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); background: var(--bg-sunken); border-bottom: 1px solid var(--border-color); }
+
+    /* ── No-traffic row ── */
+    .tr-no-traffic { opacity: 0.6; }
+    .method-muted { opacity: 0.45; }
+
+    /* ── Route row layout helpers ── */
+    .td-path { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .td-stats { display: flex; gap: var(--space-3); align-items: center; justify-content: flex-end; margin-left: auto; }
   </style>
 </head>
 
