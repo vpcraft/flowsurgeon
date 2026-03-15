@@ -36,9 +36,9 @@ Requirements for v0.6.0 release. Each maps to roadmap phases.
 
 ### Security Documentation
 
-- [ ] **SDOC-01**: Security section documenting allowed_hosts, header redaction, env var kill switch
-- [ ] **SDOC-02**: Production warning: "FlowSurgeon is a development tool. Do not enable in production."
-- [ ] **SDOC-03**: Guidance on .gitignore for flowsurgeon.db
+- [x] **SDOC-01**: Security section documenting allowed_hosts, header redaction, env var kill switch
+- [x] **SDOC-02**: Production warning: "FlowSurgeon is a development tool. Do not enable in production."
+- [x] **SDOC-03**: Guidance on .gitignore for flowsurgeon.db
 
 ### Announcement Assets
 
@@ -111,9 +111,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RDET-03 | Phase 2 | Complete |
 | DPOL-01 | Phase 2 | Complete |
 | DPOL-02 | Phase 2 | Complete |
-| SDOC-01 | Phase 3 | Pending |
-| SDOC-02 | Phase 3 | Pending |
-| SDOC-03 | Phase 3 | Pending |
+| SDOC-01 | Phase 3 | Complete |
+| SDOC-02 | Phase 3 | Complete |
+| SDOC-03 | Phase 3 | Complete |
 | ANMT-01 | Phase 4 | Pending |
 | ANMT-02 | Phase 4 | Pending |
 

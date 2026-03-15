@@ -8,7 +8,7 @@ v0.6.0 is a polish-and-launch milestone on top of a working v0.5.0 codebase. The
 
 - [x] **Phase 1: CSS Design System** - Refactor UI to shadcn-inspired CSS custom properties with Swagger-convention method badges (completed 2026-03-14)
 - [x] **Phase 2: Routes Pages** - Build routes home page and route detail page, polish detail tabs (completed 2026-03-15)
-- [ ] **Phase 3: Security Documentation** - Write security and production-warning docs
+- [x] **Phase 3: Security Documentation** - Write security and production-warning docs (completed 2026-03-15)
 - [ ] **Phase 4: Announcement Assets** - Produce screenshots, demo GIF, and README for public launch
 
 ## Phase Details
@@ -51,7 +51,7 @@ Plans:
   1. Documentation covers `allowed_hosts`, header redaction behavior, and the `FLOWSURGEON_ENABLED` env var kill switch
   2. A production warning is visible in the Quick Start — "FlowSurgeon is a development tool. Do not enable in production."
   3. Docs include guidance on adding `flowsurgeon.db` to `.gitignore`
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 03-01-PLAN.md — Security section, [!WARNING] callout, and .gitignore guidance in README.md
 
@@ -70,5 +70,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. CSS Design System | 2/2 | Complete   | 2026-03-14 |
 | 2. Routes Pages | 2/2 | Complete   | 2026-03-15 |
-| 3. Security Documentation | 0/1 | Not started | - |
+| 3. Security Documentation | 1/1 | Complete   | 2026-03-15 |
 | 4. Announcement Assets | 0/TBD | Not started | - |
