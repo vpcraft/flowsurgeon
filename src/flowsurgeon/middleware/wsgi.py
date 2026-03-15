@@ -12,6 +12,7 @@ from flowsurgeon._http import (
     _MIME_TYPES,
     _TEXT_CONTENT_TYPES,
     _decode_body,
+    _parse_qs_int,
     _parse_qs_param,
     _strip_ipv6_zone,
 )
@@ -29,6 +30,7 @@ from flowsurgeon.ui.panel import (
     discover_routes,
     render_detail_page,
     render_panel,
+    render_route_detail_page,
     render_routes_page,
 )
 
@@ -142,17 +144,34 @@ class FlowSurgeonWSGI:
     def _serve_history(
         self, environ: Environ, start_response: StartResponse, query_string: str = ""
     ) -> Iterable[bytes]:
-        method_filter = _parse_qs_param(query_string, "method", "")
-        sort = _parse_qs_param(query_string, "sort", "duration")
+        method_param = _parse_qs_param(query_string, "method", "")
+        path_param = _parse_qs_param(query_string, "path", "")
 
-        records = self._storage.list_recent(limit=500)
-        body = render_routes_page(
-            records,
-            self._config.debug_route,
-            app_routes=self._app_routes,
-            method_filter=method_filter,
-            sort=sort,
-        ).encode()
+        if method_param and path_param:
+            # Route detail view
+            status = _parse_qs_param(query_string, "status", "")
+            sort = _parse_qs_param(query_string, "sort", "recent")
+            page = _parse_qs_int(query_string, "page", 1)
+            show = _parse_qs_int(query_string, "show", 25)
+            records = self._storage.list_recent(limit=500)
+            body = render_route_detail_page(
+                records, self._config.debug_route,
+                route_method=method_param.upper(),
+                route_path=path_param,
+                status=status, sort=sort, page=page, show=show,
+            ).encode()
+        else:
+            # Routes home view
+            method_filter = _parse_qs_param(query_string, "method", "")
+            sort = _parse_qs_param(query_string, "sort", "duration")
+            records = self._storage.list_recent(limit=500)
+            body = render_routes_page(
+                records,
+                self._config.debug_route,
+                app_routes=self._app_routes,
+                method_filter=method_filter,
+                sort=sort,
+            ).encode()
         start_response(
             "200 OK",
             [

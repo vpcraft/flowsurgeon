@@ -8,10 +8,13 @@
 <nav class="topbar">
   <span class="logo">FlowSurgeon</span>
   <div class="breadcrumb">
-    <a class="b-dim" href="{{ debug_route }}">Requests</a>
-    <span class="sep">›</span>
-    <span class="b-mid">{{ record.path }}</span>
-    <span class="sep">›</span>
+    <a class="b-dim" href="{{ debug_route }}">FlowSurgeon</a>
+    <span class="sep">&rsaquo;</span>
+    <a class="b-mid" href="{{ debug_route }}?method={{ record.method }}&amp;path={{ record.path | urlencode }}">
+      <span class="method {{ record.method | method_class }}">{{ record.method }}</span>
+      <span class="u-mono u-text-sm">{{ record.path }}</span>
+    </a>
+    <span class="sep">&rsaquo;</span>
     <span class="b-cur">{{ record.request_id[:8] }}</span>
   </div>
 </nav>
@@ -39,6 +42,13 @@
     @click.prevent="tab = 'traceback'">
     <span>Traceback</span>
     <div class="subnav-underline" x-show="tab === 'traceback'"></div>
+  </a>
+  <a class="subnav-item"
+    :class="tab === 'profile' ? 'active' : 'inactive'"
+    href="{{ debug_route }}/{{ record.request_id }}?tab=profile"
+    @click.prevent="tab = 'profile'">
+    <span>Profile</span>
+    <div class="subnav-underline" x-show="tab === 'profile'"></div>
   </a>
 </div>
 {% endblock %}
@@ -167,6 +177,11 @@
 {# ── Traceback tab ── #}
 <div class="tab-panel" x-show="tab === 'traceback'" x-cloak>
   {% include "partials/detail_traceback.html" %}
+</div>
+
+{# ── Profile tab ── #}
+<div class="tab-panel" x-show="tab === 'profile'" x-cloak>
+  {% include "partials/detail_profile.html" %}
 </div>
 
 {% endblock %}
