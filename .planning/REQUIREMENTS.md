@@ -17,11 +17,11 @@ Requirements for v0.6.0 release. Each maps to roadmap phases.
 
 ### Routes Home Page
 
-- [ ] **RHOM-01**: Home page (`/flowsurgeon`) displays API routes list as primary view
-- [ ] **RHOM-02**: Each route shows HTTP method badge + path + description (if available)
-- [ ] **RHOM-03**: Routes grouped or sortable by method
-- [ ] **RHOM-04**: Routes with no traffic shown in muted style
-- [ ] **RHOM-05**: Existing requests grid available as secondary tab/view
+- [x] **RHOM-01**: Home page (`/flowsurgeon`) displays API routes list as primary view
+- [x] **RHOM-02**: Each route shows HTTP method badge + path + description (if available)
+- [x] **RHOM-03**: Routes grouped or sortable by method
+- [x] **RHOM-04**: Routes with no traffic shown in muted style
+- [x] **RHOM-05**: Existing requests grid available as secondary tab/view
 
 ### Route Detail Page
 
@@ -101,11 +101,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UIDS-03 | Phase 1 | Complete |
 | UIDS-04 | Phase 1 | Complete |
 | UIDS-05 | Phase 1 | Complete |
-| RHOM-01 | Phase 2 | Pending |
-| RHOM-02 | Phase 2 | Pending |
-| RHOM-03 | Phase 2 | Pending |
-| RHOM-04 | Phase 2 | Pending |
-| RHOM-05 | Phase 2 | Pending |
+| RHOM-01 | Phase 2 | Complete |
+| RHOM-02 | Phase 2 | Complete |
+| RHOM-03 | Phase 2 | Complete |
+| RHOM-04 | Phase 2 | Complete |
+| RHOM-05 | Phase 2 | Complete |
 | RDET-01 | Phase 2 | Pending |
 | RDET-02 | Phase 2 | Pending |
 | RDET-03 | Phase 2 | Pending |

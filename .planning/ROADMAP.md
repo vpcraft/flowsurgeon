@@ -38,7 +38,7 @@ Plans:
   3. Routes can be sorted or grouped by HTTP method
   4. Clicking a route navigates to a filtered view showing only requests for that endpoint, with method + path in the breadcrumb
   5. The filtered route view includes status, duration, and date controls; all 4 request detail tabs (Details, SQL, Traceback, Profile) are visually consistent with the design system
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 02-01-PLAN.md — Routes home page: render_routes_page(), grouped layout, method filter pills, muted no-traffic rows
 - [ ] 02-02-PLAN.md — Route detail page, middleware wiring, detail.html breadcrumb + Profile tab, integration tests
@@ -67,6 +67,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. CSS Design System | 2/2 | Complete   | 2026-03-14 |
-| 2. Routes Pages | 0/2 | Planning complete | - |
+| 2. Routes Pages | 1/2 | In Progress|  |
 | 3. Security Documentation | 0/TBD | Not started | - |
 | 4. Announcement Assets | 0/TBD | Not started | - |
