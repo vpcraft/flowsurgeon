@@ -362,6 +362,43 @@ def render_routes_page(
     )
 
 
+def render_route_detail_page(
+    records: list[RequestRecord],
+    debug_route: str,
+    route_method: str,
+    route_path: str,
+    status: str = "",
+    sort: str = "recent",
+    page: int = 1,
+    show: int = 25,
+) -> str:
+    """Return the filtered request list for a specific route."""
+    filtered = _filter_records(records, method=route_method, path=route_path, status=status)
+
+    # Sort
+    if sort == "duration":
+        filtered = sorted(filtered, key=lambda r: r.duration_ms, reverse=True)
+    elif sort == "status":
+        filtered = sorted(filtered, key=lambda r: r.status_code)
+    else:  # "recent" (default) -- most recent first
+        filtered = sorted(filtered, key=lambda r: r.timestamp, reverse=True)
+
+    page_items, total_pages, page = _paginate(filtered, page, show)
+    tmpl = _env.get_template("route_detail.html")
+    return tmpl.render(
+        records=page_items,
+        total_records=len(filtered),
+        route_method=route_method,
+        route_path=route_path,
+        debug_route=debug_route,
+        status=status,
+        sort=sort,
+        page=page,
+        total_pages=total_pages,
+        show=show,
+    )
+
+
 def render_history_page(
     records: list[RequestRecord],
     debug_route: str,

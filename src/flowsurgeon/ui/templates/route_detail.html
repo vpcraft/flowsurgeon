@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}FlowSurgeon — {{ route_method }} {{ route_path }}{% endblock %}
+
+{% block topbar %}
+<nav class="topbar">
+  <span class="logo">FlowSurgeon</span>
+  <div class="breadcrumb">
+    <a class="b-dim" href="{{ debug_route }}">FlowSurgeon</a>
+    <span class="sep">&rsaquo;</span>
+    <span class="b-cur">
+      <span class="method {{ route_method | method_class }}">{{ route_method }}</span>
+      <span class="u-mono u-text-sm">{{ route_path }}</span>
+    </span>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="tab-panel">
+
+  {# ── Filter / sort controls ── #}
+  <form method="GET" action="{{ debug_route }}" class="filter-bar">
+    <input type="hidden" name="method" value="{{ route_method }}">
+    <input type="hidden" name="path" value="{{ route_path }}">
+
+    <span class="filter-label">Status:</span>
+    <select name="status" class="filter-select" onchange="this.form.submit()">
+      <option value=""    {% if status == "" %}selected{% endif %}>All</option>
+      <option value="2xx" {% if status == "2xx" %}selected{% endif %}>2xx</option>
+      <option value="3xx" {% if status == "3xx" %}selected{% endif %}>3xx</option>
+      <option value="4xx" {% if status == "4xx" %}selected{% endif %}>4xx</option>
+      <option value="5xx" {% if status == "5xx" %}selected{% endif %}>5xx</option>
+    </select>
+
+    <span class="filter-label">Sort:</span>
+    <select name="sort" class="filter-select" onchange="this.form.submit()">
+      <option value="recent"   {% if sort == "recent" %}selected{% endif %}>Recent</option>
+      <option value="duration" {% if sort == "duration" %}selected{% endif %}>Duration</option>
+      <option value="status"   {% if sort == "status" %}selected{% endif %}>Status</option>
+    </select>
+
+    <span class="filter-label">Show:</span>
+    <select name="show" class="filter-select" onchange="this.form.submit()">
+      <option value="10"  {% if show == 10 %}selected{% endif %}>10</option>
+      <option value="25"  {% if show == 25 %}selected{% endif %}>25</option>
+      <option value="50"  {% if show == 50 %}selected{% endif %}>50</option>
+    </select>
+  </form>
+
+  {# ── Results summary ── #}
+  <div class="section-header">
+    <span class="u-muted u-text-md">
+      {{ total_records }} request{% if total_records != 1 %}s{% endif %} for
+      <span class="method {{ route_method | method_class }}">{{ route_method }}</span>
+      <span class="u-mono u-text-sm">{{ route_path }}</span>
+    </span>
+  </div>
+
+  {# ── Request list table ── #}
+  <div class="table-wrap">
+    <div class="tbl-head">
+      <span class="th w-100">REQUEST ID</span>
+      <span class="th w-90">STATUS</span>
+      <span class="th w-110">DURATION</span>
+      <span class="th w-80">QUERIES</span>
+      <span class="th w-fill">TIME</span>
+    </div>
+    <div class="tbl-body">
+      {% for record in records %}
+      <a class="tr tr-req td-link" href="{{ debug_route }}/{{ record.request_id }}">
+        <span class="td w-100 u-mono u-text-sm">{{ record.request_id[:8] }}</span>
+        <span class="td w-90">
+          <span class="status {{ record.status_code | status_class }}">{{ record.status_code }}</span>
+        </span>
+        <span class="td w-110 {{ record.duration_ms | duration_class }}">
+          {{ "%.0f"|format(record.duration_ms) }} ms
+        </span>
+        <span class="td w-80 {{ (record.queries | length) | queries_color }}">
+          {{ record.queries | length }}
+        </span>
+        <span class="td td-dim w-fill">
+          {{ record.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}
+        </span>
+      </a>
+      {% else %}
+      <div class="empty">No requests recorded for this route.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── Pagination ── #}
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+    <a class="page-btn"
+      href="{{ debug_route }}?method={{ route_method }}&amp;path={{ route_path | urlencode }}&amp;status={{ status }}&amp;sort={{ sort }}&amp;show={{ show }}&amp;page={{ page - 1 }}">
+      &laquo; Previous
+    </a>
+    {% endif %}
+    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a class="page-btn"
+      href="{{ debug_route }}?method={{ route_method }}&amp;path={{ route_path | urlencode }}&amp;status={{ status }}&amp;sort={{ sort }}&amp;show={{ show }}&amp;page={{ page + 1 }}">
+      Next &raquo;
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
