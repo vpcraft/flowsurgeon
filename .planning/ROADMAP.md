@@ -25,8 +25,8 @@ v0.6.0 is a polish-and-launch milestone on top of a working v0.5.0 codebase. The
   5. No inline `style=` attributes remain in any template — all overrides are utility classes
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 01-01-PLAN.md — Build CSS token layer, refactor base.html (tokens, badges, borders, typography, utilities)
-- [ ] 01-02-PLAN.md — Replace inline style= attributes across all template files with utility classes
+- [x] 01-01-PLAN.md — Build CSS token layer, refactor base.html (tokens, badges, borders, typography, utilities)
+- [x] 01-02-PLAN.md — Replace inline style= attributes across all template files with utility classes
 
 ### Phase 2: Routes Pages
 **Goal**: Users can navigate a Swagger-like routes list as the home page and drill into per-route request history
@@ -38,7 +38,10 @@ Plans:
   3. Routes can be sorted or grouped by HTTP method
   4. Clicking a route navigates to a filtered view showing only requests for that endpoint, with method + path in the breadcrumb
   5. The filtered route view includes status, duration, and date controls; all 4 request detail tabs (Details, SQL, Traceback, Profile) are visually consistent with the design system
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Routes home page: render_routes_page(), grouped layout, method filter pills, muted no-traffic rows
+- [ ] 02-02-PLAN.md — Route detail page, middleware wiring, detail.html breadcrumb + Profile tab, integration tests
 
 ### Phase 3: Security Documentation
 **Goal**: Users understand that FlowSurgeon is a development tool and how to keep it safe
@@ -64,6 +67,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. CSS Design System | 2/2 | Complete   | 2026-03-14 |
-| 2. Routes Pages | 0/TBD | Not started | - |
+| 2. Routes Pages | 0/2 | Planning complete | - |
 | 3. Security Documentation | 0/TBD | Not started | - |
 | 4. Announcement Assets | 0/TBD | Not started | - |
