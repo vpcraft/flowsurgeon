@@ -1317,11 +1317,39 @@
       overflow-y: auto;
     }
 
-    /* ── Method filter pills ── */
-    .filter-pills { display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4); flex-wrap: wrap; }
-    .pill { padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.8125rem; font-weight: 500; transition: var(--transition-fast); }
-    .pill:hover { background: var(--bg-elevated); color: var(--text-primary); }
-    .pill-active { background: var(--color-brand); color: #fff; border-color: var(--color-brand); }
+    /* ── Toggle group -- */
+    .toggle-group {
+      display: inline-flex;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      gap: 2px;
+    }
+
+    .toggle-item {
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 4px var(--space-4);
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .toggle-item:hover {
+      background: var(--bg-elevated);
+      color: var(--text-body);
+    }
+
+    .toggle-item-active {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
 
     /* ── Route group header ── */
     .route-group-hd { padding: var(--space-2) var(--space-4); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); background: var(--bg-sunken); border-bottom: 1px solid var(--border-color); }
@@ -1333,6 +1361,41 @@
     /* ── Route row layout helpers ── */
     .td-path { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .td-stats { display: flex; gap: var(--space-3); align-items: center; justify-content: flex-end; margin-left: auto; }
+
+    /* -- Light mode -- */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-base:      #FFFFFF;
+        --bg-surface:   #F8F9FA;
+        --bg-elevated:  #F1F3F5;
+        --bg-sunken:    #EBEDF0;
+        --border-color: #DEE2E6;
+
+        --text-primary: #0D0F12;
+        --text-body:    #1C1E21;
+        --text-muted:   #495057;
+        --text-dim:     #6C757D;
+        --text-faint:   #ADB5BD;
+        --text-brand:   #00A884;
+
+        --color-status-2xx-bg: #D1FAE5;
+        --color-status-2xx-fg: #065F46;
+        --color-status-3xx-bg: #FEF3C7;
+        --color-status-3xx-fg: #92400E;
+        --color-status-4xx-bg: #FEF3C7;
+        --color-status-4xx-fg: #92400E;
+        --color-status-5xx-bg: #FEE2E2;
+        --color-status-5xx-fg: #991B1B;
+
+        --color-dur-fast:   #059669;
+        --color-dur-medium: #D97706;
+        --color-dur-slow:   #DC2626;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #CED4DA;
+      }
+    }
   </style>
 </head>
 
