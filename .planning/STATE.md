@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-01-PLAN.md (Task 1); awaiting human-verify checkpoint for Task 2
-last_updated: "2026-03-16T06:12:58.165Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-16T07:19:06.717Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-security-documentation P01 | 1min | 1 tasks | 1 files |
 | Phase 03.1-ui-polish P01 | 12min | 2 tasks | 1 files |
 | Phase 04-announcement-assets P01 | 3min | 1 tasks | 6 files |
+| Phase 04-announcement-assets P02 | 19min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 04-announcement-assets]: screenshots dependency group isolates Playwright from dev/examples groups
 - [Phase 04-announcement-assets]: Port 8765 chosen for demo server to avoid conflicts with default port 8000
 - [Phase 04-announcement-assets]: Frames and palette.png cleaned up after GIF assembly to keep repo clean
+- [Phase 04-announcement-assets]: Used src/flowsurgeon/ui/assets/ paths in README (assets placed there by Plan 01)
+- [Phase 04-announcement-assets]: Announcement drafts use raw.githubusercontent.com URLs for inline images on Reddit and X
 
 ### Pending Todos
 
@@ -105,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T06:12:58.162Z
-Stopped at: Completed 04-01-PLAN.md (Task 1); awaiting human-verify checkpoint for Task 2
+Last session: 2026-03-16T07:19:06.707Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
