@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4ulii4nulch2u8qopdec.png" alt="FlowSurgeon" width="96">
+  <img src="src/flowsurgeon/ui/assets/logo_flowsurgeon.png" alt="FlowSurgeon" width="96">
   <h1>FlowSurgeon</h1>
   <p>Framework-agnostic profiling middleware for Python — drop-in debug UI for Flask and FastAPI.</p>
 
@@ -15,7 +15,7 @@
 FlowSurgeon wraps your existing WSGI or ASGI app with a single line. It injects a collapsible debug panel into every HTML response and stores a full request history — timing, headers, SQL queries, response bodies — in a local SQLite database, with a built-in dark-themed UI at `/flowsurgeon`.
 
 <div align="center">
-    <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ztt5hfvreqd7xff0jymz.png" alt="Home Screen">
+    <img src="src/flowsurgeon/ui/assets/routes-home.png" alt="FlowSurgeon routes home page" width="900">
 </div>
 
 ## Features
@@ -297,6 +297,14 @@ FLOWSURGEON_ENABLED=1 FLOWSURGEON_PROFILING=1 uvicorn myapp:app
 ```
 
 **ASGI note:** `cProfile` measures CPU time while the coroutine is on-thread. I/O-wait time (e.g. awaiting a DB call) appears as event-loop time rather than in the awaited coroutine's frame. CPU-bound hotspots are captured accurately.
+
+<div align="center">
+    <img src="src/flowsurgeon/ui/assets/request-detail-sql.png" alt="Request detail — SQL tab with slow and duplicate query badges" width="900">
+</div>
+
+<div align="center">
+    <img src="src/flowsurgeon/ui/assets/demo.gif" alt="FlowSurgeon demo walkthrough" width="900">
+</div>
 
 ## Running the examples
 
