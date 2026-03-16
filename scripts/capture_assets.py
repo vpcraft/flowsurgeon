@@ -1,9 +1,9 @@
 """Capture announcement assets for FlowSurgeon v0.6.0.
 
 Produces:
-    docs/screenshots/routes-home.png
-    docs/screenshots/request-detail-sql.png
-    docs/demo/demo.gif
+    src/flowsurgeon/ui/assets/routes-home.png
+    src/flowsurgeon/ui/assets/request-detail-sql.png
+    src/flowsurgeon/ui/assets/demo.gif
 
 Run with:
     uv run --group screenshots python scripts/capture_assets.py
@@ -122,7 +122,7 @@ def main() -> None:
                 path=str(SCREENSHOTS_DIR / "routes-home.png"),
                 full_page=False,
             )
-            print("  Saved docs/screenshots/routes-home.png")
+            print("  Saved src/flowsurgeon/ui/assets/routes-home.png")
 
             # ----------------------------------------------------------
             # Screenshot 2: Request detail SQL tab
@@ -152,7 +152,7 @@ def main() -> None:
                 path=str(SCREENSHOTS_DIR / "request-detail-sql.png"),
                 full_page=False,
             )
-            print("  Saved docs/screenshots/request-detail-sql.png")
+            print("  Saved src/flowsurgeon/ui/assets/request-detail-sql.png")
 
             # ----------------------------------------------------------
             # GIF frame capture
@@ -247,9 +247,9 @@ def main() -> None:
         gif_size = GIF_PATH.stat().st_size
         print()
         print("Assets captured:")
-        print(f"  docs/screenshots/routes-home.png — {(SCREENSHOTS_DIR / 'routes-home.png').stat().st_size:,} bytes")
-        print(f"  docs/screenshots/request-detail-sql.png — {(SCREENSHOTS_DIR / 'request-detail-sql.png').stat().st_size:,} bytes")
-        print(f"  docs/demo/demo.gif — {gif_size:,} bytes ({gif_size / 1_000_000:.1f} MB)")
+        print(f"  src/flowsurgeon/ui/assets/routes-home.png — {(SCREENSHOTS_DIR / 'routes-home.png').stat().st_size:,} bytes")
+        print(f"  src/flowsurgeon/ui/assets/request-detail-sql.png — {(SCREENSHOTS_DIR / 'request-detail-sql.png').stat().st_size:,} bytes")
+        print(f"  src/flowsurgeon/ui/assets/demo.gif — {gif_size:,} bytes ({gif_size / 1_000_000:.1f} MB)")
 
         if gif_size >= 10_000_000:
             print("WARNING: GIF exceeds 10 MB limit!", file=sys.stderr)
