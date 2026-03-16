@@ -75,13 +75,17 @@ Plans:
 - [ ] 03.1-02-PLAN.md — Template markup fixes in home.html and detail.html: toggle group, logo link, breadcrumb fix
 
 ### Phase 4: Announcement Assets
-**Goal**: The project has compelling, accurate screenshots and a demo GIF ready for a public announcement
+**Goal**: The project has compelling, accurate screenshots and a demo GIF ready for a public announcement, with README updated and announcement post drafts written
 **Depends on**: Phase 2, Phase 3
 **Requirements**: ANMT-01, ANMT-02
 **Success Criteria** (what must be TRUE):
   1. README contains fresh screenshots showing the redesigned routes home page and request detail view with realistic data
   2. A 30-60 second demo GIF or video exists showing the install-to-debug-UI flow
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Playwright setup, capture script, produce screenshots and demo GIF
+- [ ] 04-02-PLAN.md — Update README with repo-relative images, write announcement post drafts
 
 ## Progress
 
@@ -91,4 +95,4 @@ Plans:
 | 2. Routes Pages | 2/2 | Complete   | 2026-03-15 |
 | 3. Security Documentation | 1/1 | Complete   | 2026-03-15 |
 | 03.1 UI Polish | 1/2 | In Progress|  |
-| 4. Announcement Assets | 0/TBD | Not started | - |
+| 4. Announcement Assets | 0/2 | Not started | - |
