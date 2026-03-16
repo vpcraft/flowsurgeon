@@ -20,12 +20,12 @@ import pstats
 import sys
 from typing import TYPE_CHECKING
 
-_log = logging.getLogger(__name__)
-
 from flowsurgeon.core.records import ProfileStat
 
 if TYPE_CHECKING:
     from flowsurgeon.core.config import Config
+
+_log = logging.getLogger(__name__)
 
 
 def _short_path(filepath: str, cwd: str) -> str:

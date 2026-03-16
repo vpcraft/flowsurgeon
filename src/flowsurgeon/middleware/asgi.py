@@ -5,8 +5,6 @@ import os
 import time
 from typing import Awaitable, Callable
 
-import logging
-
 from flowsurgeon._http import (
     _HTML_CONTENT_TYPES,
     _MIME_TYPES,
@@ -17,7 +15,6 @@ from flowsurgeon._http import (
     _strip_ipv6_zone,
 )
 
-_log = logging.getLogger(__name__)
 from flowsurgeon.core.config import Config
 from flowsurgeon.core.records import RequestRecord
 from flowsurgeon.profiling import _parse_profile
@@ -204,10 +201,14 @@ class FlowSurgeonASGI:
             show = _parse_qs_int(query_string, "show", 25)
             records = await self._storage.list_recent(limit=500)
             body = render_route_detail_page(
-                records, self._config.debug_route,
+                records,
+                self._config.debug_route,
                 route_method=method_param.upper(),
                 route_path=path_param,
-                status=status, sort=sort, page=page, show=show,
+                status=status,
+                sort=sort,
+                page=page,
+                show=show,
             ).encode()
         else:
             # Routes home view

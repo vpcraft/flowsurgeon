@@ -9,7 +9,6 @@ Run with:
     uv run --group screenshots python scripts/capture_assets.py
 """
 
-import os
 import shutil
 import subprocess
 import sys
@@ -247,9 +246,15 @@ def main() -> None:
         gif_size = GIF_PATH.stat().st_size
         print()
         print("Assets captured:")
-        print(f"  src/flowsurgeon/ui/assets/routes-home.png — {(SCREENSHOTS_DIR / 'routes-home.png').stat().st_size:,} bytes")
-        print(f"  src/flowsurgeon/ui/assets/request-detail-sql.png — {(SCREENSHOTS_DIR / 'request-detail-sql.png').stat().st_size:,} bytes")
-        print(f"  src/flowsurgeon/ui/assets/demo.gif — {gif_size:,} bytes ({gif_size / 1_000_000:.1f} MB)")
+        print(
+            f"  src/flowsurgeon/ui/assets/routes-home.png — {(SCREENSHOTS_DIR / 'routes-home.png').stat().st_size:,} bytes"
+        )
+        print(
+            f"  src/flowsurgeon/ui/assets/request-detail-sql.png — {(SCREENSHOTS_DIR / 'request-detail-sql.png').stat().st_size:,} bytes"
+        )
+        print(
+            f"  src/flowsurgeon/ui/assets/demo.gif — {gif_size:,} bytes ({gif_size / 1_000_000:.1f} MB)"
+        )
 
         if gif_size >= 10_000_000:
             print("WARNING: GIF exceeds 10 MB limit!", file=sys.stderr)

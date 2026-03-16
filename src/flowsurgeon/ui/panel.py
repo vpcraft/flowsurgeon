@@ -5,12 +5,11 @@ import logging
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Any
-
-_log = logging.getLogger(__name__)
-
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from flowsurgeon.core.records import RequestRecord
+
+_log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Jinja2 environment

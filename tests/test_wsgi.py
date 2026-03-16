@@ -208,9 +208,7 @@ class TestRouteDetail:
         _call_app(app, _make_environ(path="/api/items"))
         record = storage.list_recent()[0]
 
-        status, _, body = _call_app(
-            app, _make_environ(path=f"/flowsurgeon/{record.request_id}")
-        )
+        status, _, body = _call_app(app, _make_environ(path=f"/flowsurgeon/{record.request_id}"))
         assert status == "200 OK"
         assert b"Details" in body
         assert b"SQL" in body
