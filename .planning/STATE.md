@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-16T04:20:51.509Z"
+stopped_at: Phase 03.1 context gathered
+last_updated: "2026-03-16T04:53:22.117Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 3
   total_plans: 5
   completed_plans: 5
@@ -85,6 +85,10 @@ Recent decisions affecting current work:
 
 None yet.
 
+### Roadmap Evolution
+
+- Phase 03.1 inserted after Phase 3: UI Polish — professional look, breadcrumb fix, light mode, shadcn filter pills (URGENT)
+
 ### Blockers/Concerns
 
 - Phase 1 planning: CSS token values are specified in ARCHITECTURE.md — read that before planning phase 1
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T04:20:51.504Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-announcement-assets/04-CONTEXT.md
+Last session: 2026-03-16T04:53:22.112Z
+Stopped at: Phase 03.1 context gathered
+Resume file: .planning/phases/03.1-ui-polish-professional-look-breadcrumb-fix-light-mode-shadcn-filter-pills/03.1-CONTEXT.md
