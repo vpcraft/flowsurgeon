@@ -183,7 +183,7 @@
       font-size: 14px;
     }
 
-    .breadcrumb .sep {
+    .breadcrumb .bc-sep {
       color: var(--text-faint);
     }
 
@@ -193,12 +193,12 @@
 
     .breadcrumb .b-mid {
       color: var(--text-body);
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .breadcrumb .b-cur {
       color: var(--text-brand);
-      font-weight: 500;
+      font-weight: 600;
     }
 
     /* ── Sub-nav ── */
@@ -864,7 +864,14 @@
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
-      gap: var(--space-3);
+      gap: var(--space-4);
+      padding: 0 var(--space-4);
+    }
+
+    .controls-row-inner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
     }
 
     /* ── Tab buttons ── */

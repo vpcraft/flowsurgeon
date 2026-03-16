@@ -383,10 +383,9 @@ class TestRouteDetail:
             ),
         )
         assert status == 200
-        # Filter select elements present
-        assert b'name="status"' in body
-        assert b'name="sort"' in body
-        assert b'name="show"' in body
+        # Toggle group filter controls present
+        assert b'toggle-group' in body
+        assert b'toggle-item' in body
 
     async def test_route_detail_breadcrumb(self, tmp_path):
         """RDET-03: route detail page breadcrumb shows FlowSurgeon and method+path."""
