@@ -68,7 +68,7 @@ Plans:
   4. FlowSurgeon logo is a clickable home link on every page
   5. Detail breadcrumb has no duplicate text and uses / separator
   6. Light mode activates automatically via prefers-color-scheme: light
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 03.1-01-PLAN.md — CSS overhaul in base.html: animation removal, spacing density, toggle group classes, light mode media query
@@ -90,5 +90,5 @@ Plans:
 | 1. CSS Design System | 2/2 | Complete   | 2026-03-14 |
 | 2. Routes Pages | 2/2 | Complete   | 2026-03-15 |
 | 3. Security Documentation | 1/1 | Complete   | 2026-03-15 |
-| 03.1 UI Polish | 0/2 | Planning complete | - |
+| 03.1 UI Polish | 1/2 | In Progress|  |
 | 4. Announcement Assets | 0/TBD | Not started | - |

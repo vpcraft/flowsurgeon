@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Phase 03.1 UI-SPEC approved
-last_updated: "2026-03-16T05:06:12.002Z"
+stopped_at: Completed 03.1-ui-polish-01-PLAN.md
+last_updated: "2026-03-16T05:26:24.045Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 0
 ---
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-routes-pages P01 | 4min | 2 tasks | 6 files |
 | Phase 02-routes-pages P02 | 3min | 3 tasks | 6 files |
 | Phase 03-security-documentation P01 | 1min | 1 tasks | 1 files |
+| Phase 03.1-ui-polish P01 | 12min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [Phase 02-routes-pages]: Profile tab re-added to detail.html; detail_profile.html partial was already clean from Phase 1
 - [Phase 03-security-documentation]: Security section inserted between Quick Start and SQL query tracking with four subsections in risk-priority order
 - [Phase 03-security-documentation]: Environment variable section consolidated to one-liner redirect to preserve external anchor links
+- [Phase 03.1-ui-polish]: Animation removal: all @keyframes and animation: properties deleted; transition: properties kept as hover/focus affordances
+- [Phase 03.1-ui-polish]: Toggle group replaces pills: .toggle-group/.toggle-item/.toggle-item-active pattern matches shadcn convention
+- [Phase 03.1-ui-polish]: Light mode via @media (prefers-color-scheme: light) only — no JS toggle required; method badge tokens excluded from light block
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T05:06:11.991Z
-Stopped at: Phase 03.1 UI-SPEC approved
-Resume file: .planning/phases/03.1-ui-polish-professional-look-breadcrumb-fix-light-mode-shadcn-filter-pills/03.1-UI-SPEC.md
+Last session: 2026-03-16T05:26:24.042Z
+Stopped at: Completed 03.1-ui-polish-01-PLAN.md
+Resume file: None
