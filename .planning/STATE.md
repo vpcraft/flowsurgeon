@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-15T19:27:37.362Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-16T07:19:06.717Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 5
+  completed_phases: 4
+  total_plans: 9
+  completed_plans: 8
   percent: 0
 ---
 
@@ -56,6 +56,9 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-routes-pages P01 | 4min | 2 tasks | 6 files |
 | Phase 02-routes-pages P02 | 3min | 3 tasks | 6 files |
 | Phase 03-security-documentation P01 | 1min | 1 tasks | 1 files |
+| Phase 03.1-ui-polish P01 | 12min | 2 tasks | 1 files |
+| Phase 04-announcement-assets P01 | 3min | 1 tasks | 6 files |
+| Phase 04-announcement-assets P02 | 19min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -80,10 +83,22 @@ Recent decisions affecting current work:
 - [Phase 02-routes-pages]: Profile tab re-added to detail.html; detail_profile.html partial was already clean from Phase 1
 - [Phase 03-security-documentation]: Security section inserted between Quick Start and SQL query tracking with four subsections in risk-priority order
 - [Phase 03-security-documentation]: Environment variable section consolidated to one-liner redirect to preserve external anchor links
+- [Phase 03.1-ui-polish]: Animation removal: all @keyframes and animation: properties deleted; transition: properties kept as hover/focus affordances
+- [Phase 03.1-ui-polish]: Toggle group replaces pills: .toggle-group/.toggle-item/.toggle-item-active pattern matches shadcn convention
+- [Phase 03.1-ui-polish]: Light mode via @media (prefers-color-scheme: light) only — no JS toggle required; method badge tokens excluded from light block
+- [Phase 04-announcement-assets]: screenshots dependency group isolates Playwright from dev/examples groups
+- [Phase 04-announcement-assets]: Port 8765 chosen for demo server to avoid conflicts with default port 8000
+- [Phase 04-announcement-assets]: Frames and palette.png cleaned up after GIF assembly to keep repo clean
+- [Phase 04-announcement-assets]: Used src/flowsurgeon/ui/assets/ paths in README (assets placed there by Plan 01)
+- [Phase 04-announcement-assets]: Announcement drafts use raw.githubusercontent.com URLs for inline images on Reddit and X
 
 ### Pending Todos
 
 None yet.
+
+### Roadmap Evolution
+
+- Phase 03.1 inserted after Phase 3: UI Polish — professional look, breadcrumb fix, light mode, shadcn filter pills (URGENT)
 
 ### Blockers/Concerns
 
@@ -93,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T19:25:13.928Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-16T07:19:06.707Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None

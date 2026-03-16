@@ -42,8 +42,8 @@ Requirements for v0.6.0 release. Each maps to roadmap phases.
 
 ### Announcement Assets
 
-- [ ] **ANMT-01**: Fresh README screenshots showing redesigned UI with realistic data
-- [ ] **ANMT-02**: Demo GIF or video (30-60 seconds) showing install, wrap app, browse debug UI
+- [x] **ANMT-01**: Fresh README screenshots showing redesigned UI with realistic data
+- [x] **ANMT-02**: Demo GIF or video (30-60 seconds) showing install, wrap app, browse debug UI
 
 ## v2 Requirements
 
@@ -114,8 +114,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SDOC-01 | Phase 3 | Complete |
 | SDOC-02 | Phase 3 | Complete |
 | SDOC-03 | Phase 3 | Complete |
-| ANMT-01 | Phase 4 | Pending |
-| ANMT-02 | Phase 4 | Pending |
+| ANMT-01 | Phase 4 | Complete |
+| ANMT-02 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 20 total

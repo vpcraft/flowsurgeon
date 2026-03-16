@@ -6,15 +6,14 @@
 
 {% block topbar %}
 <nav class="topbar">
-  <span class="logo">FlowSurgeon</span>
+  <a class="logo" href="{{ debug_route }}">FlowSurgeon</a>
   <div class="breadcrumb">
-    <a class="b-dim" href="{{ debug_route }}">FlowSurgeon</a>
-    <span class="sep">&rsaquo;</span>
+    <span class="bc-sep">/</span>
     <a class="b-mid" href="{{ debug_route }}?method={{ record.method }}&amp;path={{ record.path | urlencode }}">
       <span class="method {{ record.method | method_class }}">{{ record.method }}</span>
       <span class="u-mono u-text-sm">{{ record.path }}</span>
     </a>
-    <span class="sep">&rsaquo;</span>
+    <span class="bc-sep">/</span>
     <span class="b-cur">{{ record.request_id[:8] }}</span>
   </div>
 </nav>

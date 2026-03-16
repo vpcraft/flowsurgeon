@@ -4,27 +4,25 @@
 
 {% block topbar %}
 <nav class="topbar">
-  <span class="logo">FlowSurgeon</span>
+  <a class="logo" href="{{ debug_route }}">FlowSurgeon</a>
 </nav>
 {% endblock %}
 
 {% block content %}
 <div class="spa-wrapper" x-data="{ methodFilter: 'ALL' }">
 
-  {# ── Method filter pills ── #}
-  <div class="filter-pills" style="flex-shrink: 0;">
-    {% for m in ['ALL', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'] %}
-    <button
-      class="pill"
-      :class="methodFilter === '{{ m }}' ? 'pill-active' : ''"
-      @click="methodFilter = '{{ m }}'"
-      type="button"
-    >{{ m }}</button>
-    {% endfor %}
-  </div>
-
-  {# ── Route count ── #}
-  <div style="padding: 0 var(--space-4); flex-shrink: 0;">
+  {# -- Method filter toggle group -- #}
+  <div class="controls-row" style="flex-shrink: 0;">
+    <div class="toggle-group">
+      {% for m in ['ALL', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'] %}
+      <button
+        class="toggle-item"
+        :class="methodFilter === '{{ m }}' ? 'toggle-item-active' : ''"
+        @click="methodFilter = '{{ m }}'"
+        type="button"
+      >{{ m }}</button>
+      {% endfor %}
+    </div>
     <span class="u-dim u-text-sm">{{ total_routes }} route{% if total_routes != 1 %}s{% endif %}</span>
   </div>
 
