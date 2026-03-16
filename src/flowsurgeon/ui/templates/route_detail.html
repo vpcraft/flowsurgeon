@@ -46,13 +46,13 @@
     <div class="tbl-body">
       {% for record in records %}
       <a class="tr" href="{{ debug_route }}/{{ record.request_id }}">
-        <div class="td w-80 u-mono u-text-sm">{{ record.request_id[:8] }}</div>
+        <div class="td w-fill u-mono u-text-sm">{{ record.request_id }}</div>
         <div class="td w-80">
           <span class="status {{ record.status_code | status_class }}">{{ record.status_code }}</span>
         </div>
         <div class="td w-80 {{ record.duration_ms | duration_class }}">{{ "%.0f"|format(record.duration_ms) }}ms</div>
-        <div class="td w-80 {{ (record.queries | length) | queries_color }}">{{ record.queries | length }}q</div>
-        <div class="td w-fill td-dim">{{ record.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</div>
+        <div class="td w-110 {{ (record.queries | length) | queries_color }}">{{ record.queries | length }} {{ "query" if record.queries | length == 1 else "queries" }}</div>
+        <div class="td w-110 td-dim">{{ record.timestamp.strftime("%Y-%m-%d %H:%M:%S") | relative_time }}</div>
       </a>
       {% else %}
       <div class="empty">No requests recorded for this route.</div>
