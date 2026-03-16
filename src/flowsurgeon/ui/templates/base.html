@@ -104,22 +104,6 @@
 
     code { font-family: var(--font-mono); }
 
-    /* ── Page fade-in ── */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(8px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-4px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
     body {
       font-family: var(--font-sans);
       background: var(--bg-base);
@@ -145,7 +129,6 @@
       gap: var(--space-7);
       padding: 0 var(--space-7);
       flex-shrink: 0;
-      animation: slideDown 0.2s ease both;
     }
 
     .logo {
@@ -227,7 +210,6 @@
       padding: 0 var(--space-8);
       border-top: 1px solid var(--border-color);
       flex-shrink: 0;
-      animation: slideDown 0.2s ease 0.05s both;
     }
 
     .subnav-item {
@@ -270,13 +252,12 @@
 
     /* ── Content ── */
     .content {
-      padding: var(--space-7) var(--space-8);
+      padding: var(--space-4) var(--space-6);
       display: flex;
       flex-direction: column;
       gap: var(--space-6);
       flex: 1;
       overflow: hidden;
-      animation: fadeIn 0.2s ease both;
     }
 
     /* ── Section header ── */
@@ -350,7 +331,7 @@
     }
 
     .tr {
-      height: 52px;
+      height: 40px;
       display: flex;
       align-items: center;
       padding: 0 var(--space-6);
@@ -363,7 +344,7 @@
     }
 
     .tr-req {
-      height: 48px;
+      height: 40px;
     }
 
     .tr:hover {
@@ -951,13 +932,11 @@
       gap: 6px;
       text-decoration: none;
       cursor: pointer;
-      transition: border-color var(--transition-base), transform var(--transition-base);
-      animation: cardIn 0.2s ease both;
+      transition: border-color var(--transition-base);
     }
 
     .req-card:hover {
       border-color: var(--color-brand);
-      transform: translateY(-2px);
     }
 
     .req-card-top {
@@ -998,20 +977,6 @@
       font-size: 12px;
       color: var(--color-dur-medium);
     }
-
-    /* ── Staggered card animation ── */
-    .req-card:nth-child(1)  { animation-delay: 0.03s; }
-    .req-card:nth-child(2)  { animation-delay: 0.06s; }
-    .req-card:nth-child(3)  { animation-delay: 0.09s; }
-    .req-card:nth-child(4)  { animation-delay: 0.12s; }
-    .req-card:nth-child(5)  { animation-delay: 0.15s; }
-    .req-card:nth-child(6)  { animation-delay: 0.18s; }
-    .req-card:nth-child(7)  { animation-delay: 0.21s; }
-    .req-card:nth-child(8)  { animation-delay: 0.24s; }
-    .req-card:nth-child(9)  { animation-delay: 0.27s; }
-    .req-card:nth-child(10) { animation-delay: 0.30s; }
-    .req-card:nth-child(11) { animation-delay: 0.33s; }
-    .req-card:nth-child(12) { animation-delay: 0.36s; }
 
     /* ── Profiling placeholder ── */
     .profiling-placeholder {
