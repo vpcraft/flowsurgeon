@@ -81,7 +81,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. README contains fresh screenshots showing the redesigned routes home page and request detail view with realistic data
   2. A 30-60 second demo GIF or video exists showing the install-to-debug-UI flow
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 04-01-PLAN.md — Playwright setup, capture script, produce screenshots and demo GIF
@@ -95,4 +95,4 @@ Plans:
 | 2. Routes Pages | 2/2 | Complete   | 2026-03-15 |
 | 3. Security Documentation | 1/1 | Complete   | 2026-03-15 |
 | 03.1 UI Polish | 1/2 | In Progress|  |
-| 4. Announcement Assets | 0/2 | Not started | - |
+| 4. Announcement Assets | 1/2 | In Progress|  |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03.1-ui-polish-01-PLAN.md
-last_updated: "2026-03-16T05:26:24.045Z"
+stopped_at: Completed 04-01-PLAN.md (Task 1); awaiting human-verify checkpoint for Task 2
+last_updated: "2026-03-16T06:12:58.165Z"
 last_activity: 2026-03-15 — Roadmap created
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 7
   percent: 0
 ---
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-routes-pages P02 | 3min | 3 tasks | 6 files |
 | Phase 03-security-documentation P01 | 1min | 1 tasks | 1 files |
 | Phase 03.1-ui-polish P01 | 12min | 2 tasks | 1 files |
+| Phase 04-announcement-assets P01 | 3min | 1 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 03.1-ui-polish]: Animation removal: all @keyframes and animation: properties deleted; transition: properties kept as hover/focus affordances
 - [Phase 03.1-ui-polish]: Toggle group replaces pills: .toggle-group/.toggle-item/.toggle-item-active pattern matches shadcn convention
 - [Phase 03.1-ui-polish]: Light mode via @media (prefers-color-scheme: light) only — no JS toggle required; method badge tokens excluded from light block
+- [Phase 04-announcement-assets]: screenshots dependency group isolates Playwright from dev/examples groups
+- [Phase 04-announcement-assets]: Port 8765 chosen for demo server to avoid conflicts with default port 8000
+- [Phase 04-announcement-assets]: Frames and palette.png cleaned up after GIF assembly to keep repo clean
 
 ### Pending Todos
 
@@ -101,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T05:26:24.042Z
-Stopped at: Completed 03.1-ui-polish-01-PLAN.md
+Last session: 2026-03-16T06:12:58.162Z
+Stopped at: Completed 04-01-PLAN.md (Task 1); awaiting human-verify checkpoint for Task 2
 Resume file: None
